@@ -77,12 +77,32 @@
 
 ---
 
-## Phase 1 — Foundation (Setup + Auth + Layout)
+## Phase 1 — Foundation (Setup + Auth + Layout) ✅ COMPLETE (2026-05-20)
 
 **Goal:** Project runs locally. User can register, log in, see the editorial homepage shell.
 
-### 1.1 Project Initialization
-- [ ] `npx create-next-app@latest .` — TypeScript, App Router, Tailwind, ESLint, `src/` directory, import alias `@/*`
+> **Status:** All Phase 1 acceptance criteria met. Commits:
+> - `64eda67` chore: baseline docs and gitignore
+> - `a32bcfc` feat(phase-1.1): scaffold Next.js 16 + Tailwind v4 + shadcn
+> - `226dead` feat(phase-1.2): production-grade Prisma schema, migration, seed
+> - `b9eba98` feat(phase-1.3+1.5): editorial design system + homepage shell
+> - `5c42939` chore(storage): switch dev PDF/cache root to public/uploads
+> - `fb620cc` feat(phase-1.4): full authentication flow
+>
+> **Key deviations from this plan (intentional):**
+> - **Next.js 16.2.6** (not 15) — Next 16 had released by build time. App Router APIs identical, so no spec impact.
+> - **Prisma 7.8** (not 5/6) — Required `@prisma/adapter-mariadb` + `mariadb` driver; client is generated to `src/generated/prisma/` via the new `prisma-client` provider; seed command moved from `package.json` to `prisma.config.ts > migrations.seed`.
+> - **shadcn base-nova preset** (not classic Radix) — uses `@base-ui/react`. The `asChild` prop doesn't exist; Link styling uses `buttonVariants()` + `cn()`. Sheet uses the `render={<Button />}` prop.
+> - **Storage root: `./public/uploads/`** (not `./storage/`) — user request 2026-05-20 for dev convenience. ⚠ MUST swap to `STORAGE_DRIVER=r2` before prod since PDFs are web-accessible.
+> - **Email transport: console-stub** (no SMTP creds yet). Verification + reset links print to dev console and write `EmailLog` rows. Swap to real Nodemailer in Phase 4.1 with zero code change.
+> - **Skipped `/ui-ux-pro-max` skill** (user choice) — palette + fonts were already locked, so implemented directly with the listed tokens.
+> - **`/admin/login` route not yet built** — admin login UI ships with Phase 3.1. The User-model SUPER_ADMIN seed (`admin@gmail.com`) works via the regular `/login` route today since role is in JWT claims.
+> - **`middleware.ts` deprecation warning** — Next 16 prefers `proxy.ts`. File works as-is; rename deferred to Phase 2 cleanup.
+>
+> **Polish deferred to Phase 4.4 (per task.md):** logged-in header state, toast notifications (sonner installed but unwired), loading skeletons, error boundaries, 404 page, account "change password" form.
+
+### 1.1 Project Initialization ✅ (commit `a32bcfc`)
+- [x] `npx create-next-app@latest .` — TypeScript, App Router, Tailwind, ESLint, `src/` directory, import alias `@/*`
 - [ ] Install core deps: `prisma @prisma/client jose bcryptjs zod react-hook-form @hookform/resolvers`
 - [ ] Install dev deps: `@types/bcryptjs`
 - [ ] Initialize shadcn/ui: `npx shadcn@latest init` with editorial theme tokens
@@ -148,7 +168,7 @@
 - [ ] Add `storage/pdfs/` and `storage/cache/` to `.gitignore`
 - [ ] Create folder structure per CLAUDE.md "Expected Folder Structure"
 
-### 1.2 Prisma Schema — Production-Grade
+### 1.2 Prisma Schema — Production-Grade ✅ (commit `226dead`)
 
 > **Design principle:** PROJECT_DOCS.md describes the *minimum*. This schema covers everything a real production publication platform needs: roles, sessions, categories, authors, reading progress, bookmarks, reviews, comments, plans, coupons, invoices, audit logs, notifications, email logs, webhook logs, activity tracking, settings, soft deletes. Future-proofed without over-engineering.
 
@@ -261,7 +281,7 @@
 - [ ] Run seed: `npx prisma db seed`
 - [ ] Verify in Prisma Studio (`npx prisma studio`)
 
-### 1.3 Design System (`/ui-ux-pro-max`)
+### 1.3 Design System ✅ (commit `b9eba98`)  *(skipped `/ui-ux-pro-max` skill per user)*
 - [ ] Invoke `/ui-ux-pro-max` to lock editorial palette + typography:
   - Background: warm off-white (`#FAF7F2` or similar)
   - Primary text: deep ink (`#1A1A1A`)
@@ -285,7 +305,7 @@
 - [ ] Mobile-responsive nav with hamburger drawer
 - [ ] Toast system (sonner via shadcn) — Tamil messages with English fallback
 
-### 1.4 Authentication — Full Production Flow
+### 1.4 Authentication — Full Production Flow ✅ (commit `fb620cc`)  *(11-step live smoke test passed)*
 - [ ] `lib/auth.ts` — JWT sign/verify with `jose`, password hash/verify with `bcryptjs`, cookie helpers, role guards (`requireRole('ADMIN')`)
 - [ ] `lib/rate-limit.ts` — token-bucket rate limiter (in-memory for dev, Upstash Redis-ready for prod)
 - [ ] `middleware.ts` — protect `/account/*`, `/admin/*`; role-based gate for admin; rate-limit headers
@@ -314,17 +334,17 @@
   - `app/account/subscription/page.tsx` — current plan, expiry, renew CTA, payment history
 - [ ] Test: register → verify email → login → reset password → logout-all flow
 
-### 1.5 Homepage Shell
+### 1.5 Homepage Shell ✅ (commit `b9eba98`)
 - [ ] `app/page.tsx` — placeholder hero ("தமிழ் இலக்கியத்தின் டிஜிட்டல் வீடு"), featured books grid (3-up), recent blogs (3-up), CTA section
 - [ ] Pulls seeded data from DB
 - [ ] Lighthouse: aim for 90+ on initial load
 
-**Acceptance Criteria — Phase 1:**
-- `npm run dev` starts cleanly on `http://localhost:3000`
-- Prisma Studio shows schema with seed data
-- Register/login/logout flow works end-to-end
-- Homepage renders with Tamil fonts loaded correctly
-- Mobile (375px) responsive
+**Acceptance Criteria — Phase 1:** ✅ all met (2026-05-20)
+- [x] `npm run dev` starts cleanly on `http://localhost:3000` — confirmed HTTP 200
+- [x] Prisma Studio shows schema with seed data — 31 models, 17 settings, 1 admin, 1 plan, 5 cats, 2 tags, 2 authors, 3 contents, 1 coupon
+- [x] Register/login/logout flow works end-to-end — 11-step live smoke test passed
+- [x] Homepage renders with Tamil fonts loaded correctly — Noto Sans Tamil + Lora confirmed
+- [x] Mobile (375px) responsive — Sheet drawer + responsive grids
 
 ---
 
