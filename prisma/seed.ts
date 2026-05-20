@@ -142,18 +142,25 @@ async function main() {
   const kattuirai = await prisma.category.findUniqueOrThrow({ where: { slug: "kattuirai" } });
   const aarampamTag = await prisma.tag.findUniqueOrThrow({ where: { slug: "aarampam" } });
 
-  // 6a. Free PDF sample
+  // Demo PDF file present in public/uploads/pdfs/ (user-supplied for dev).
+  // Both PDF sample contents point at it so the viewer + paywall can be
+  // exercised end-to-end before the admin upload flow exists.
+  const DEMO_PDF_KEY = "pdfs/cf3077ca-f0f7-48c7-8909-162f52542a99.pdf";
+  const DEMO_PDF_PAGES = 144;
+
+  // 6a. Free PDF sample — all pages readable for everyone
   await prisma.content.upsert({
     where: { slug: "bharathi-padalgal-sample" },
-    update: {},
+    update: { filePath: DEMO_PDF_KEY, pageCount: DEMO_PDF_PAGES },
     create: {
       slug: "bharathi-padalgal-sample",
       type: "PDF",
       titleTamil: "பாரதியார் பாடல்கள் — மாதிரி",
       titleEnglish: "Bharathi Padalgal — Sample",
-      description: "பாரதியாரின் தேர்ந்தெடுக்கப்பட்ட தேசபக்திப் பாடல்கள் (பத்து பக்க மாதிரி). Selected patriotic songs of Bharati (10-page sample).",
+      description: "பாரதியாரின் தேர்ந்தெடுக்கப்பட்ட தேசபக்திப் பாடல்கள். Selected patriotic songs of Bharati.",
       language: "TA",
-      pageCount: 10,
+      filePath: DEMO_PDF_KEY,
+      pageCount: DEMO_PDF_PAGES,
       isPremium: false,
       isFeatured: true,
       status: "PUBLISHED",
@@ -171,10 +178,10 @@ async function main() {
     },
   });
 
-  // 6b. Premium PDF sample
+  // 6b. Premium PDF sample — pages 1-2 free, rest gated by Subscription
   await prisma.content.upsert({
     where: { slug: "ponniyin-selvan-vol-1" },
-    update: {},
+    update: { filePath: DEMO_PDF_KEY, pageCount: DEMO_PDF_PAGES },
     create: {
       slug: "ponniyin-selvan-vol-1",
       type: "PDF",
@@ -182,7 +189,8 @@ async function main() {
       titleEnglish: "Ponniyin Selvan — Volume 1",
       description: "சோழ சாம்ராஜ்யத்தின் வரலாற்று நாவல். The historical epic of the Chola empire.",
       language: "TA",
-      pageCount: 320,
+      filePath: DEMO_PDF_KEY,
+      pageCount: DEMO_PDF_PAGES,
       isPremium: true,
       isFeatured: true,
       status: "PUBLISHED",

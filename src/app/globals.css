@@ -178,3 +178,55 @@
     line-height: 1.7;
   }
 }
+
+/* Long-form article styling (blog reader). Tamil-optimized: 1.8 line-height,
+   65ch max-width on the container is set by the page itself. */
+.blog-prose {
+  font-size: 1.0625rem;
+  line-height: 1.85;
+  color: var(--foreground);
+}
+.blog-prose:lang(en) { line-height: 1.7; }
+.blog-prose > * + * { margin-top: 1.25em; }
+.blog-prose h2 {
+  font-family: var(--font-heading);
+  font-size: 1.65em;
+  line-height: 1.25;
+  margin-top: 2em;
+}
+.blog-prose h3 {
+  font-family: var(--font-heading);
+  font-size: 1.3em;
+  margin-top: 1.5em;
+}
+.blog-prose p { max-width: 65ch; }
+.blog-prose a {
+  color: var(--primary);
+  text-decoration-color: color-mix(in oklab, var(--primary) 40%, transparent);
+  text-underline-offset: 3px;
+}
+.blog-prose a:hover { text-decoration-color: var(--primary); }
+.blog-prose blockquote {
+  border-left: 3px solid var(--border);
+  padding-left: 1.25em;
+  color: var(--muted-foreground);
+  font-style: italic;
+}
+.blog-prose code {
+  font-family: var(--font-mono);
+  font-size: 0.9em;
+  background: var(--secondary);
+  padding: 0.1em 0.35em;
+  border-radius: 4px;
+}
+.blog-prose pre {
+  background: var(--secondary);
+  padding: 1em;
+  border-radius: 6px;
+  overflow-x: auto;
+}
+.blog-prose ul, .blog-prose ol { padding-left: 1.5em; }
+.blog-prose ul { list-style: disc; }
+.blog-prose ol { list-style: decimal; }
+.blog-prose li + li { margin-top: 0.4em; }
+.blog-prose img { border-radius: 6px; }
