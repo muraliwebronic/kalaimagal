@@ -33,8 +33,11 @@ export default async function ReaderPage({
   }
 
   const user = await getCurrentUser();
-  const [isSubscribed, fullUser] = await Promise.all([
-    user
+  // Staff roles (EDITOR / ADMIN / SUPER_ADMIN) bypass the paywall.
+  const isStaff =
+    user?.role === "EDITOR" || user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const [hasActiveSub, fullUser] = await Promise.all([
+    user && !isStaff
       ? prisma.subscription.findFirst({
           where: {
             userId: user.id,
@@ -51,6 +54,7 @@ export default async function ReaderPage({
         })
       : Promise.resolve(null),
   ]);
+  const isSubscribed = isStaff || hasActiveSub;
 
   const priceInrSetting = await getSetting<number>("payment.current_price_inr");
   const priceInr = typeof priceInrSetting === "number" ? priceInrSetting : 99;

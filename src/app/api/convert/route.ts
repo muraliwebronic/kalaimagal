@@ -57,10 +57,16 @@ export async function GET(req: Request) {
   const cookieToken = cookieStore.get(COOKIE_ACCESS)?.value;
   const rawToken = cookieToken ?? queryToken;
   let userId: number | null = null;
+  let userRole: string | null = null;
   if (rawToken) {
     const claims = await verifyAccessToken(rawToken);
-    if (claims) userId = Number(claims.sub);
+    if (claims) {
+      userId = Number(claims.sub);
+      userRole = claims.role;
+    }
   }
+  const isStaff =
+    userRole === "EDITOR" || userRole === "ADMIN" || userRole === "SUPER_ADMIN";
 
   // --- 4. Rate limit (anonymous users keyed by IP) ----------------------
   const ip = getClientIp(req);
@@ -102,26 +108,32 @@ export async function GET(req: Request) {
     return new NextResponse("Page out of range", { status: 404 });
   }
 
-  // --- 6. Tier check: premium + non-subscribed + page > free limit → 403
-  let isSubscribed = false;
+  // --- 6. Tier check: premium + no paid access + page > free limit → 403
+  // Paid access = active Subscription row OR admin/editor staff role
+  // (staff bypass the paywall — they're internal users, not customers).
+  let hasPaidAccess = false;
   let watermarkText = "PREVIEW";
   if (userId) {
     const [activeSub, user] = await Promise.all([
-      prisma.subscription.findFirst({
-        where: { userId, status: "ACTIVE", expiresAt: { gt: new Date() } },
-        select: { id: true },
-      }),
+      isStaff
+        ? Promise.resolve(null)
+        : prisma.subscription.findFirst({
+            where: { userId, status: "ACTIVE", expiresAt: { gt: new Date() } },
+            select: { id: true },
+          }),
       prisma.user.findUnique({
         where: { id: userId },
         select: { email: true, phone: true },
       }),
     ]);
-    if (activeSub) {
-      isSubscribed = true;
+    if (isStaff || activeSub) {
+      hasPaidAccess = true;
+      // Staff get an attributable watermark too — if a leak happens, the
+      // watermark identifies which staff account viewed the page.
       watermarkText = user?.phone ?? user?.email ?? "Kalaimagal";
     }
   }
-  if (content.isPremium && !isSubscribed && page > FREE_PAGE_LIMIT) {
+  if (content.isPremium && !hasPaidAccess && page > FREE_PAGE_LIMIT) {
     return new NextResponse("Subscription required", { status: 403 });
   }
 
@@ -130,7 +142,7 @@ export async function GET(req: Request) {
   // user-specific) mean we can ONLY cache the public PREVIEW watermark
   // for non-subscribers; subscriber pages must be rendered per-request
   // (their watermark embeds their email/phone).
-  const cacheable = !isSubscribed;
+  const cacheable = !hasPaidAccess;
   const cacheKey = storageKeys.page(String(content.id), page);
 
   if (cacheable) {
@@ -168,7 +180,7 @@ export async function GET(req: Request) {
 
   return new NextResponse(new Uint8Array(webp), {
     status: 200,
-    headers: cacheHeaders(isSubscribed),
+    headers: cacheHeaders(hasPaidAccess),
   });
 }
 
