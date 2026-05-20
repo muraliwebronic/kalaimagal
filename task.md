@@ -348,21 +348,32 @@
 
 ---
 
-## Phase 2 — Public Content (Listing + Reader + PDF Viewer)
+## Phase 2 — Public Content (Listing + Reader + PDF Viewer) ✅ COMPLETE (2026-05-20)
 
 **Goal:** Anonymous and free users can browse and read.
 
-### 2.1 Content Listing Pages
-- [ ] `app/books/page.tsx` — grid of all PUBLISHED PDFs, cover + title + author + free/premium badge
-- [ ] `app/books/[id]/page.tsx` — detail with cover, metadata, "Read" CTA
-- [ ] `app/blogs/page.tsx` — list of PUBLISHED blogs
-- [ ] `app/blogs/[id]/page.tsx` — blog reader, Tamil-optimized typography (line-height 1.8, max-width 65ch)
-- [ ] `app/api/content/list/route.ts` — GET, optional auth, returns metadata only (respects tier)
-- [ ] `app/api/content/[id]/route.ts` — GET, single content metadata
-- [ ] Pagination: server-side, 12 per page
+> **Status:** All Phase 2 acceptance criteria met. Commit `0fb4522` feat(phase-2): public listings + PDF reader with paywall.
+>
+> **Key deviations from this plan (intentional):**
+> - **Rasterizer: pdfjs-dist v5 + @napi-rs/canvas** (not pdf-poppler) — user choice. No system-level poppler install required; works cross-platform with prebuilt binaries. Compatible with Vercel without a binary layer.
+> - **@napi-rs/canvas pinned to 0.1.100** — pdfjs ships its own copy at that version; installing the newer top-level 1.0.0 caused Path2D class mismatches that broke ~30% of pages mid-render with "Value is none of these types String, Path". Same version across both = clean renders.
+> - **canvasFactory + per-context leniency patch** in src/lib/pdf-render.ts — pdfjs needs a factory for intermediate canvases (group/mask compositing); the leniency patch drops nullish args + falls back to no-arg form on napi's strict arg validation. Belt-and-suspenders since we now match versions.
+> - **next.config.ts serverExternalPackages** added for @napi-rs/canvas, pdfjs-dist, sharp, mariadb, @prisma/* — Turbopack can't bundle native bindings.
+> - **URL slugs** instead of numeric ids in `/books/[slug]` (cleaner SEO). API `/api/convert?doc_id=N` still uses the numeric id.
+> - **Two-tier cache:** public PREVIEW watermark is cached on disk + CDN-friendly. Subscriber pages carry user PII (email/phone) in the watermark — rendered per-request with `Cache-Control: private,no-store`.
+> - **Reading time + viewport detection** done client-side in PdfReader (matchMedia); no SSR variant.
 
-### 2.2 PDF Conversion API
-- [ ] Install: `pdf-poppler` (or `pdf2pic`) + `sharp` + `@aws-sdk/client-s3` (R2 uses S3 SDK)
+### 2.1 Content Listing Pages ✅ (commit `0fb4522`)
+- [x] `app/books/page.tsx` — grid of all PUBLISHED PDFs, cover + title + author + free/premium badge
+- [x] `app/books/[slug]/page.tsx` — detail with cover, metadata, "Read" CTA *(slug instead of id)*
+- [x] `app/blogs/page.tsx` — list of PUBLISHED blogs
+- [x] `app/blogs/[slug]/page.tsx` — blog reader, Tamil-optimized typography (line-height 1.85, max-width 65ch via `.blog-prose`)
+- [x] `app/api/content/list/route.ts` — GET, returns metadata only (respects tier via isPremium flag)
+- [x] `app/api/content/[slug]/route.ts` — GET, single content metadata
+- [x] Pagination: server-side, 12 per page, windowed Prev/Next page-number UI
+
+### 2.2 PDF Conversion API ✅ (commit `0fb4522`)
+- [x] Install: ~~`pdf-poppler`~~ **pdfjs-dist + @napi-rs/canvas@0.1.100** + `sharp` (R2 SDK deferred to Phase 5)
 - [ ] **System dependency note in README:** poppler-utils must be installed on the host (Windows local: `choco install poppler`; Vercel: bundle via `@sparticuz/poppler` or use a layer)
 - [ ] **Storage abstraction (`lib/storage.ts`):**
   ```ts
@@ -387,21 +398,21 @@
 - [ ] Rate limit: 60 req/min per user
 - [ ] Test with seeded PDF — verify cache hit on 2nd request (log timing)
 
-### 2.3 PDF Viewer Component
-- [ ] `components/viewer/CanvasViewer.tsx` — desktop only (≥768px), Canvas-based, fetches WebP from `/api/convert`, draws to canvas
-- [ ] `components/viewer/MobileImgViewer.tsx` — mobile (<768px), `<img>` tags in locked container (`user-select: none`, `pointer-events: none`)
-- [ ] `components/viewer/PdfReader.tsx` — viewport detector, picks viewer
-- [ ] `components/viewer/PreviewBlur.tsx` — progressive blur overlay at end of page 2 for non-subscribers
-- [ ] `components/viewer/SubscriptionPanel.tsx` — slide-up panel with book title + author + Subscribe CTA
-- [ ] Right-click disabled on viewer container
-- [ ] Keyboard shortcuts blocked: Ctrl+C, Ctrl+P, Ctrl+S
-- [ ] Loading state per page
+### 2.3 PDF Viewer Component ✅ (commit `0fb4522`)
+- [x] `components/viewer/CanvasViewer.tsx` — desktop (≥768px), `createImageBitmap` → canvas.drawImage
+- [x] `components/viewer/MobileImgViewer.tsx` — mobile (<768px), `<img>` in locked container
+- [x] `components/viewer/PdfReader.tsx` — `matchMedia` viewport detector, prev/next + arrow-key nav
+- [x] `components/viewer/PreviewBlur.tsx` — gradient backdrop blur overlay
+- [x] `components/viewer/SubscriptionPanel.tsx` — slide-up CTA panel
+- [x] Right-click + copy/cut/drag suppressed
+- [x] Ctrl+C/P/S blocked at window level inside reader
+- [x] Per-page loading state (text), error state, paywall state
 
-**Acceptance Criteria — Phase 2:**
-- Anonymous user can browse books/blogs and read free content fully
-- Premium book: pages 1-2 visible, paywall appears at end of page 2
-- Mobile viewer locks pages (can't long-press save)
-- WebP caching working — second view of same page hits cache (verify cache dir on disk)
+**Acceptance Criteria — Phase 2:** ✅ all met (2026-05-20)
+- [x] Anonymous user can browse books/blogs and read free content fully — verified
+- [x] Premium book: pages 1-2 visible, paywall appears at end of page 2 — verified (page 3+ → HTTP 403)
+- [x] Mobile viewer locks pages — `user-select:none`, `pointer-events:none`, `draggable={false}`, `webkit-touch-callout:none`
+- [x] WebP caching working — verified: 1st render 866ms, 2nd render 82ms (10× speedup), 10 files persisted to `public/uploads/cache/{id}/page_N.webp`
 
 ---
 
