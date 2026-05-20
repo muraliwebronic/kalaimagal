@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import {
   DropdownMenu,
   DropdownMenuContent,
+  DropdownMenuGroup,
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
@@ -26,7 +27,7 @@ export function UserMenu({ user }: UserMenuProps) {
   const isAdmin =
     user.role === "EDITOR" || user.role === "ADMIN" || user.role === "SUPER_ADMIN";
 
-  // Use first letter of name + email for the avatar
+  // First letter of the user's name (fallback to email)
   const initial = (user.name || user.email || "?").trim().charAt(0).toUpperCase();
 
   async function logout() {
@@ -53,36 +54,42 @@ export function UserMenu({ user }: UserMenuProps) {
           <p className="text-xs text-muted-foreground truncate font-normal">{user.email}</p>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem render={<Link href="/account" />}>
-          <User className="size-4" />
-          <span data-bi lang="ta">என் கணக்கு</span>
-          <span data-bi lang="en">My Account</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/account/subscription" />}>
-          <CreditCard className="size-4" />
-          <span data-bi lang="ta">சந்தா</span>
-          <span data-bi lang="en">Subscription</span>
-        </DropdownMenuItem>
-        <DropdownMenuItem render={<Link href="/account/security" />}>
-          <BookMarked className="size-4" />
-          <span data-bi lang="ta">பாதுகாப்பு</span>
-          <span data-bi lang="en">Security</span>
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem render={<Link href="/account" />}>
+            <User className="size-4" />
+            <span data-bi lang="ta">என் கணக்கு</span>
+            <span data-bi lang="en">My Account</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/account/subscription" />}>
+            <CreditCard className="size-4" />
+            <span data-bi lang="ta">சந்தா</span>
+            <span data-bi lang="en">Subscription</span>
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link href="/account/security" />}>
+            <BookMarked className="size-4" />
+            <span data-bi lang="ta">பாதுகாப்பு</span>
+            <span data-bi lang="en">Security</span>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
         {isAdmin && (
           <>
             <DropdownMenuSeparator />
-            <DropdownMenuItem render={<Link href="/admin" />}>
-              <ShieldCheck className="size-4" />
-              Admin
-            </DropdownMenuItem>
+            <DropdownMenuGroup>
+              <DropdownMenuItem render={<Link href="/admin" />}>
+                <ShieldCheck className="size-4" />
+                Admin
+              </DropdownMenuItem>
+            </DropdownMenuGroup>
           </>
         )}
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={logout} disabled={busy}>
-          <LogOut className="size-4" />
-          <span data-bi lang="ta">வெளியேறு</span>
-          <span data-bi lang="en">Logout</span>
-        </DropdownMenuItem>
+        <DropdownMenuGroup>
+          <DropdownMenuItem onClick={logout} disabled={busy}>
+            <LogOut className="size-4" />
+            <span data-bi lang="ta">வெளியேறு</span>
+            <span data-bi lang="en">Logout</span>
+          </DropdownMenuItem>
+        </DropdownMenuGroup>
       </DropdownMenuContent>
     </DropdownMenu>
   );
