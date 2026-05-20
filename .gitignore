@@ -60,3 +60,6 @@ prisma/generated/
 # --- Misc ---
 *.pem
 .cache/
+
+# --- Claude Code state ---
+.claude/
