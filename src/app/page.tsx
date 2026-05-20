@@ -81,23 +81,24 @@ export default async function HomePage() {
             <div className="max-w-3xl">
               <div className="mb-4 inline-flex items-center gap-2 rounded-full border border-border bg-secondary/40 px-3 py-1 text-xs text-muted-foreground">
                 <span className="inline-block size-1.5 rounded-full bg-accent-alt" />
-                <span lang="ta">தமிழ் இலக்கியம், புதிய தளம்</span>
-                <span className="text-muted-foreground/50">·</span>
-                <span lang="en" className="italic">A new platform for Tamil literature</span>
+                <span data-bi lang="ta">தமிழ் இலக்கியம், புதிய தளம்</span>
+                <span data-bi lang="en" className="italic">A new platform for Tamil literature</span>
               </div>
 
               <h1
+                data-bi
                 lang="ta"
                 className="font-heading text-4xl md:text-5xl lg:text-6xl font-medium leading-[1.15] tracking-tight text-foreground"
               >
                 {hero?.headline_tamil ?? taglineTa}
               </h1>
-              <p
+              <h1
+                data-bi
                 lang="en"
-                className="mt-4 text-lg md:text-xl text-muted-foreground font-heading italic"
+                className="font-heading text-4xl md:text-5xl lg:text-6xl font-medium leading-[1.15] tracking-tight text-foreground"
               >
                 {hero?.headline_english ?? taglineEn}
-              </p>
+              </h1>
 
               <div className="mt-10 flex flex-col gap-3 sm:flex-row sm:items-center">
                 <Link href="/books" className={cn(buttonVariants({ size: "lg" }))}>
@@ -105,7 +106,6 @@ export default async function HomePage() {
                     ta={hero?.cta_text_tamil ?? strings.cta.startReading.ta}
                     en={hero?.cta_text_english ?? strings.cta.startReading.en}
                     variant="inline"
-                    englishHidden
                   />
                 </Link>
                 <Link href="/blogs" className={cn(buttonVariants({ variant: "outline", size: "lg" }))}>
@@ -113,7 +113,6 @@ export default async function HomePage() {
                     ta={strings.nav.articles.ta}
                     en={strings.nav.articles.en}
                     variant="inline"
-                    englishHidden
                   />
                 </Link>
               </div>
@@ -139,7 +138,6 @@ export default async function HomePage() {
                 ta={strings.cta.viewAll.ta}
                 en={strings.cta.viewAll.en}
                 variant="inline"
-                englishHidden
               />
               {" →"}
             </Link>
@@ -178,7 +176,6 @@ export default async function HomePage() {
                   ta={strings.cta.viewAll.ta}
                   en={strings.cta.viewAll.en}
                   variant="inline"
-                  englishHidden
                 />
                 {" →"}
               </Link>
@@ -203,24 +200,30 @@ export default async function HomePage() {
         <section className="container mx-auto px-4 md:px-6 py-20 md:py-24">
           <div className="mx-auto max-w-2xl text-center">
             <h2
+              data-bi
               lang="ta"
               className="font-heading text-3xl md:text-4xl tracking-tight"
             >
               வாசிக்கத் தொடங்குங்கள்.
             </h2>
-            <p
+            <h2
+              data-bi
               lang="en"
-              className="mt-2 text-base md:text-lg italic text-muted-foreground"
+              className="font-heading text-3xl md:text-4xl tracking-tight"
             >
               Start reading today.
-            </p>
-            <p lang="ta" className="mt-6 text-base text-muted-foreground leading-relaxed">
+            </h2>
+            <p data-bi lang="ta" className="mt-6 text-base text-muted-foreground leading-relaxed">
               மாதம் ₹99 — அனைத்து புத்தகங்களுக்கும், அனைத்து கட்டுரைகளுக்கும்
               வரம்பற்ற அணுகல்.
             </p>
+            <p data-bi lang="en" className="mt-6 text-base text-muted-foreground leading-relaxed">
+              ₹99/month — unlimited access to all books and articles.
+            </p>
             <div className="mt-8 flex justify-center">
               <Link href="/register" className={cn(buttonVariants({ size: "lg" }))}>
-                {strings.cta.subscribe.ta}
+                <span data-bi lang="ta">{strings.cta.subscribe.ta}</span>
+                <span data-bi lang="en">{strings.cta.subscribe.en}</span>
               </Link>
             </div>
           </div>
@@ -235,8 +238,8 @@ export default async function HomePage() {
 function EmptyState({ ta, en }: { ta: string; en: string }) {
   return (
     <div className="rounded-lg border border-dashed border-border bg-card/50 p-12 text-center">
-      <p lang="ta" className="text-base text-muted-foreground">{ta}</p>
-      <p lang="en" className="mt-1 text-sm italic text-muted-foreground/70">{en}</p>
+      <p data-bi lang="ta" className="text-base text-muted-foreground">{ta}</p>
+      <p data-bi lang="en" className="text-base text-muted-foreground">{en}</p>
     </div>
   );
 }

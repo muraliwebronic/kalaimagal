@@ -38,21 +38,31 @@ export function SubscriptionPanel({
       <div className="mx-auto max-w-xl rounded-xl border border-border bg-card p-6 md:p-8 shadow-xl">
         <div className="text-center space-y-3">
           <p className="text-xs uppercase tracking-wider text-muted-foreground">
-            <span lang="ta">முழுவதையும் வாசிக்க</span>
-            <span className="ml-1.5 italic">/ Continue reading</span>
+            <span data-bi lang="ta">முழுவதையும் வாசிக்க</span>
+            <span data-bi lang="en">Continue reading</span>
           </p>
-          <h3 lang="ta" className="font-heading text-2xl md:text-3xl tracking-tight">
-            {titleTamil}
-          </h3>
-          {(titleEnglish || authorNameTamil) && (
-            <p className="text-sm text-muted-foreground">
-              {authorNameTamil && <span lang="ta">{authorNameTamil}</span>}
-              {authorNameTamil && titleEnglish && <span className="mx-2">·</span>}
-              {titleEnglish && <span lang="en" className="italic">{titleEnglish}</span>}
-            </p>
+          {titleEnglish ? (
+            <>
+              <h3 data-bi lang="ta" className="font-heading text-2xl md:text-3xl tracking-tight">
+                {titleTamil}
+              </h3>
+              <h3 data-bi lang="en" className="font-heading text-2xl md:text-3xl tracking-tight">
+                {titleEnglish}
+              </h3>
+            </>
+          ) : (
+            <h3 lang="ta" className="font-heading text-2xl md:text-3xl tracking-tight">
+              {titleTamil}
+            </h3>
           )}
-          <p lang="ta" className="text-sm text-muted-foreground leading-relaxed pt-2">
+          {authorNameTamil && (
+            <p lang="ta" className="text-sm text-muted-foreground">{authorNameTamil}</p>
+          )}
+          <p data-bi lang="ta" className="text-sm text-muted-foreground leading-relaxed pt-2">
             மாதம் ₹{priceInr} — அனைத்து புத்தகங்கள் + கட்டுரைகள், வரம்பற்ற அணுகல்.
+          </p>
+          <p data-bi lang="en" className="text-sm text-muted-foreground leading-relaxed pt-2">
+            ₹{priceInr}/month — unlimited access to all books and articles.
           </p>
           <div className="pt-2 flex flex-col sm:flex-row gap-3 justify-center items-center">
             {isLoggedIn && user ? (

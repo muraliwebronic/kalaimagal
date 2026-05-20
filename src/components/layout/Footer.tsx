@@ -34,16 +34,16 @@ export function Footer({ supportEmail }: { supportEmail?: string }) {
         <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
           {/* Brand block */}
           <div className="md:col-span-5">
-            <div lang="ta" className="font-heading text-3xl text-primary">
+            <div data-bi lang="ta" className="font-heading text-3xl text-primary">
               {strings.brand.name.ta}
             </div>
-            <div className="mt-1 text-sm text-muted-foreground">
+            <div data-bi lang="en" className="font-heading text-3xl text-primary">
               {strings.brand.name.en}
             </div>
-            <p lang="ta" className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
+            <p data-bi lang="ta" className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
               {strings.brand.tagline.ta}
             </p>
-            <p lang="en" className="mt-1 max-w-sm text-sm italic text-muted-foreground">
+            <p data-bi lang="en" className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
               {strings.brand.tagline.en}
             </p>
             {supportEmail && (
@@ -89,8 +89,8 @@ export function Footer({ supportEmail }: { supportEmail?: string }) {
         <Separator className="my-8" />
 
         <div className="flex flex-col items-start gap-2 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <p lang="ta">{rightsTa}</p>
-          <p lang="en" className="italic">{rightsEn}</p>
+          <p data-bi lang="ta">{rightsTa}</p>
+          <p data-bi lang="en">{rightsEn}</p>
         </div>
       </div>
     </footer>

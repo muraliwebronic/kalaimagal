@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Tamil, Lora, JetBrains_Mono } from "next/font/google";
+import { getUserLang } from "@/lib/user-lang";
 import "./globals.css";
 
 const notoTamil = Noto_Sans_Tamil({
@@ -31,14 +32,16 @@ export const metadata: Metadata = {
   description: "தமிழ் இலக்கியத்தின் டிஜிட்டல் வீடு — Tamil e-books and essays, curated and edited for serious readers.",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const userLang = await getUserLang();
   return (
     <html
-      lang="ta"
+      lang={userLang}
+      data-lang={userLang}
       className={`${notoTamil.variable} ${lora.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <body className="min-h-full flex flex-col">{children}</body>

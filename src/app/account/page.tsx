@@ -12,7 +12,6 @@ export default async function AccountPage({
   searchParams: Promise<{ welcome?: string }>;
 }) {
   const user = await getCurrentUser();
-  // Layout already guards, but TS narrowing
   if (!user) return null;
 
   const { welcome } = await searchParams;
@@ -28,11 +27,17 @@ export default async function AccountPage({
       {welcome && (
         <Card className="border-primary/30 bg-primary/5">
           <CardContent className="p-5">
-            <p lang="ta" className="font-heading text-lg">
+            <p data-bi lang="ta" className="font-heading text-lg">
               வரவேற்கிறோம், {user.name}.
             </p>
-            <p lang="en" className="text-sm italic text-muted-foreground">
-              Welcome to Kalaimagal. Check your inbox for a verification link.
+            <p data-bi lang="en" className="font-heading text-lg">
+              Welcome, {user.name}.
+            </p>
+            <p data-bi lang="ta" className="text-sm text-muted-foreground">
+              உங்கள் மின்னஞ்சலை உறுதிப்படுத்த இணைப்பு அனுப்பப்பட்டது.
+            </p>
+            <p data-bi lang="en" className="text-sm text-muted-foreground">
+              Check your inbox for a verification link.
             </p>
           </CardContent>
         </Card>
@@ -48,19 +53,19 @@ export default async function AccountPage({
             <Badge variant="secondary">{user.role}</Badge>
             {user.emailVerifiedAt ? (
               <Badge variant="secondary">
-                <span lang="ta">உறுதிசெய்யப்பட்டது</span>
-                <span className="ml-1.5 text-xs text-muted-foreground">/ Verified</span>
+                <span data-bi lang="ta">உறுதிசெய்யப்பட்டது</span>
+                <span data-bi lang="en">Verified</span>
               </Badge>
             ) : (
               <Badge variant="default">
-                <span lang="ta">உறுதி நிலுவையில்</span>
-                <span className="ml-1.5 text-xs">/ Verify pending</span>
+                <span data-bi lang="ta">உறுதி நிலுவையில்</span>
+                <span data-bi lang="en">Verify pending</span>
               </Badge>
             )}
             {subscription ? (
               <Badge>
-                <span lang="ta">சந்தாதாரர்</span>
-                <span className="ml-1.5 text-xs">/ Subscribed</span>
+                <span data-bi lang="ta">சந்தாதாரர்</span>
+                <span data-bi lang="en">Subscribed</span>
               </Badge>
             ) : null}
           </div>
@@ -70,23 +75,24 @@ export default async function AccountPage({
       <Card>
         <CardContent className="space-y-3 p-6">
           <h3 className="font-heading text-lg tracking-tight">
-            <span lang="ta">சந்தா நிலை</span>
-            <span className="ml-1.5 text-sm text-muted-foreground">/ Subscription</span>
+            <span data-bi lang="ta">சந்தா நிலை</span>
+            <span data-bi lang="en">Subscription</span>
           </h3>
           {subscription ? (
             <div className="text-sm">
               <p>
-                <span lang="ta">{subscription.plan.nameTamil}</span>
-                <span className="ml-2 text-muted-foreground">/ {subscription.plan.nameEnglish}</span>
+                <span data-bi lang="ta">{subscription.plan.nameTamil}</span>
+                <span data-bi lang="en">{subscription.plan.nameEnglish}</span>
               </p>
               <p className="text-muted-foreground mt-1">
-                செயல்படும் நாள் வரை: {subscription.expiresAt.toLocaleDateString()}
+                <span data-bi lang="ta">செயல்படும் நாள் வரை: {subscription.expiresAt.toLocaleDateString()}</span>
+                <span data-bi lang="en">Active until: {subscription.expiresAt.toLocaleDateString()}</span>
               </p>
             </div>
           ) : (
             <div className="text-sm text-muted-foreground">
-              <p lang="ta">இப்போது சந்தா எதுவும் இல்லை.</p>
-              <p lang="en" className="italic">No active subscription.</p>
+              <p data-bi lang="ta">இப்போது சந்தா எதுவும் இல்லை.</p>
+              <p data-bi lang="en">No active subscription.</p>
             </div>
           )}
         </CardContent>

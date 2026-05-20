@@ -47,22 +47,41 @@ export function ContentCard({ item }: { item: ContentCardData }) {
 
           <div className="absolute left-3 top-3 flex flex-col gap-1.5">
             <Badge variant={item.isPremium ? "default" : "secondary"} className="font-normal">
-              {item.isPremium ? strings.badge.premium.ta : strings.badge.free.ta}
+              <span data-bi lang="ta">
+                {item.isPremium ? strings.badge.premium.ta : strings.badge.free.ta}
+              </span>
+              <span data-bi lang="en">
+                {item.isPremium ? strings.badge.premium.en : strings.badge.free.en}
+              </span>
             </Badge>
           </div>
         </div>
 
         <CardContent className="space-y-2 p-4">
-          <h3
-            lang="ta"
-            className="font-heading text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors"
-          >
-            {item.titleTamil}
-          </h3>
-          {item.titleEnglish && (
-            <p lang="en" className="text-xs italic text-muted-foreground line-clamp-1">
-              {item.titleEnglish}
-            </p>
+          {item.titleEnglish ? (
+            <>
+              <h3
+                data-bi
+                lang="ta"
+                className="font-heading text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors"
+              >
+                {item.titleTamil}
+              </h3>
+              <h3
+                data-bi
+                lang="en"
+                className="font-heading text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors"
+              >
+                {item.titleEnglish}
+              </h3>
+            </>
+          ) : (
+            <h3
+              lang="ta"
+              className="font-heading text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors"
+            >
+              {item.titleTamil}
+            </h3>
           )}
           {item.authorNameTamil && (
             <p lang="ta" className="text-sm text-muted-foreground line-clamp-1">

@@ -179,6 +179,19 @@
   }
 }
 
+/* ============================================================================
+   Language toggle for the public site.
+   The root layout puts data-lang="ta" or data-lang="en" on <html>.
+   BiLabel marks its bilingual chrome with `data-bi` so we only hide the
+   chrome side — book titles, blog bodies, hero text etc. (which are also
+   `lang="ta"`/`lang="en"` but NOT `data-bi`) stay visible regardless of
+   the toggle.
+   - Admin (/admin/*) is unaffected — it has its own toggle + cookie.
+   ============================================================================ */
+
+html[data-lang="ta"] [data-bi][lang="en"] { display: none; }
+html[data-lang="en"] [data-bi][lang="ta"] { display: none; }
+
 /* Long-form article styling (blog reader). Tamil-optimized: 1.8 line-height,
    65ch max-width on the container is set by the page itself. */
 .blog-prose {
