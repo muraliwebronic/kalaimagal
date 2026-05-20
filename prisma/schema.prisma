@@ -1,0 +1,879 @@
+// Kalaimagal — Prisma schema (production-grade)
+// Source of truth: task.md §1.2
+
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "mysql"
+}
+
+// ============================================================================
+// ENUMS
+// ============================================================================
+
+enum Role {
+  USER
+  EDITOR
+  ADMIN
+  SUPER_ADMIN
+}
+
+enum Language {
+  TA
+  EN
+  BILINGUAL
+}
+
+enum ContentType {
+  PDF
+  BLOG
+}
+
+enum ContentStatus {
+  DRAFT
+  SCHEDULED
+  PUBLISHED
+  ARCHIVED
+}
+
+enum ContentAuthorRole {
+  AUTHOR
+  TRANSLATOR
+  EDITOR
+  ILLUSTRATOR
+}
+
+enum HighlightColor {
+  YELLOW
+  GREEN
+  BLUE
+  PINK
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  FLAGGED
+}
+
+enum CommentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  SPAM
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  EXPIRED
+  CANCELLED
+  PAUSED
+}
+
+enum PaymentMethod {
+  CARD
+  UPI
+  NETBANKING
+  WALLET
+  EMI
+}
+
+enum PaymentStatus {
+  CREATED
+  ATTEMPTED
+  PAID
+  FAILED
+  REFUNDED
+  PARTIAL_REFUND
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+enum NotificationType {
+  SYSTEM
+  PAYMENT
+  CONTENT
+  SOCIAL
+}
+
+enum EmailStatus {
+  QUEUED
+  SENT
+  FAILED
+  BOUNCED
+}
+
+enum WebhookSource {
+  RAZORPAY
+}
+
+enum WebhookStatus {
+  RECEIVED
+  PROCESSED
+  FAILED
+  DUPLICATE
+}
+
+enum AuditAction {
+  CREATE
+  UPDATE
+  DELETE
+  LOGIN
+  LOGOUT
+  PASSWORD_RESET
+  ROLE_CHANGE
+  SUBSCRIPTION_OVERRIDE
+  CONTENT_PUBLISH
+  CONTENT_UNPUBLISH
+  PAYMENT_REFUND
+  USER_BAN
+  USER_UNBAN
+}
+
+enum ActivityEvent {
+  PAGE_VIEW
+  CONTENT_VIEW
+  READ_START
+  READ_COMPLETE
+  DOWNLOAD
+  SHARE
+  SEARCH
+  CTA_CLICK
+}
+
+enum ContactStatus {
+  NEW
+  READ
+  REPLIED
+  SPAM
+}
+
+// ============================================================================
+// CORE IDENTITY & ACCESS
+// ============================================================================
+
+model User {
+  id                              Int      @id @default(autoincrement())
+  name                            String   @db.VarChar(150)
+  email                           String   @unique @db.VarChar(255)
+  phone                           String?  @unique @db.VarChar(20)
+  passwordHash                    String   @db.VarChar(255)
+  forcePasswordChangeOnNextLogin  Boolean  @default(false)
+
+  emailVerifiedAt                 DateTime?
+  emailVerificationToken          String?  @unique @db.VarChar(255)
+  passwordResetToken              String?  @unique @db.VarChar(255)
+  passwordResetExpiresAt          DateTime?
+
+  role                            Role     @default(USER)
+  avatarUrl                       String?  @db.VarChar(500)
+  bio                             String?  @db.Text
+  preferredLanguage               Language @default(TA)
+  notificationPreferences         Json?
+
+  isActive                        Boolean  @default(true)
+  isBanned                        Boolean  @default(false)
+  banReason                       String?  @db.Text
+
+  lastLoginAt                     DateTime?
+  lastActiveAt                    DateTime?
+  loginCount                      Int      @default(0)
+
+  referralCode                    String?  @unique @db.VarChar(50)
+  referredByUserId                Int?
+  referredBy                      User?    @relation("UserReferrals", fields: [referredByUserId], references: [id], onDelete: SetNull)
+  referrals                       User[]   @relation("UserReferrals")
+
+  termsAcceptedAt                 DateTime?
+  marketingConsent                Boolean  @default(false)
+
+  deletedAt                       DateTime?
+  createdAt                       DateTime @default(now())
+  updatedAt                       DateTime @updatedAt
+
+  // Relations
+  sessions                        Session[]
+  apiTokens                       ApiToken[]
+  readingProgress                 ReadingProgress[]
+  bookmarks                       Bookmark[]
+  highlights                      Highlight[]
+  favorites                       Favorite[]
+  reviews                         Review[]
+  reviewVotes                     ReviewVote[]
+  comments                        Comment[]
+  subscriptions                   Subscription[]
+  payments                        Payment[]
+  couponUsages                    CouponUsage[]
+  invoices                        Invoice[]
+  notifications                   Notification[]
+  emailLogs                       EmailLog[]
+  auditLogs                       AuditLog[]
+  activityLogs                    ActivityLog[]
+  settingsUpdated                 Setting[]            @relation("SettingsUpdatedBy")
+  couponsCreated                  Coupon[]             @relation("CouponsCreatedBy")
+  contentCreated                  Content[]            @relation("ContentCreatedBy")
+  contentUpdated                  Content[]            @relation("ContentUpdatedBy")
+  reviewsModerated                Review[]             @relation("ReviewsModeratedBy")
+  mediaUploaded                   MediaAsset[]
+  newsletterSubscriber            NewsletterSubscriber?
+  contactSubmissionsAssigned      ContactSubmission[]  @relation("ContactAssignedTo")
+
+  @@index([email])
+  @@index([phone])
+  @@index([role])
+  @@index([isActive])
+  @@index([lastActiveAt])
+  @@index([deletedAt])
+}
+
+model Session {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash   String    @unique @db.VarChar(255)
+  deviceInfo  String?   @db.VarChar(500)
+  ipAddress   String?   @db.VarChar(45)
+  userAgent   String?   @db.VarChar(500)
+  expiresAt   DateTime
+  lastUsedAt  DateTime  @default(now())
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([tokenHash])
+  @@index([expiresAt])
+  @@index([userId])
+}
+
+model ApiToken {
+  id          Int       @id @default(autoincrement())
+  userId      Int
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name        String    @db.VarChar(150)
+  tokenHash   String    @unique @db.VarChar(255)
+  scopes      Json
+  lastUsedAt  DateTime?
+  expiresAt   DateTime?
+  revokedAt   DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId])
+}
+
+model Author {
+  id           Int      @id @default(autoincrement())
+  slug         String   @unique @db.VarChar(150)
+  nameTamil    String   @db.VarChar(255)
+  nameEnglish  String?  @db.VarChar(255)
+  bioTamil     String?  @db.Text
+  bioEnglish   String?  @db.Text
+  photoUrl     String?  @db.VarChar(500)
+  bornYear     Int?
+  diedYear     Int?
+  awards       Json?
+  isFeatured   Boolean  @default(false)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  contentAuthors ContentAuthor[]
+
+  @@index([isFeatured])
+  @@index([sortOrder])
+}
+
+model Category {
+  id           Int      @id @default(autoincrement())
+  slug         String   @unique @db.VarChar(150)
+  nameTamil    String   @db.VarChar(255)
+  nameEnglish  String?  @db.VarChar(255)
+  description  String?  @db.Text
+  parentId     Int?
+  parent       Category?  @relation("CategoryTree", fields: [parentId], references: [id], onDelete: SetNull)
+  children     Category[] @relation("CategoryTree")
+  iconUrl      String?  @db.VarChar(500)
+  sortOrder    Int      @default(0)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  contentCategories ContentCategory[]
+
+  @@index([parentId])
+  @@index([isActive])
+  @@index([sortOrder])
+}
+
+model Tag {
+  id           Int      @id @default(autoincrement())
+  slug         String   @unique @db.VarChar(150)
+  nameTamil    String   @db.VarChar(255)
+  nameEnglish  String?  @db.VarChar(255)
+  useCount     Int      @default(0)
+  createdAt    DateTime @default(now())
+
+  contentTags ContentTag[]
+
+  @@index([useCount])
+}
+
+// ============================================================================
+// CONTENT
+// ============================================================================
+
+model Content {
+  id                  Int           @id @default(autoincrement())
+  slug                String        @unique @db.VarChar(255)
+  type                ContentType
+  titleTamil          String        @db.VarChar(500)
+  titleEnglish        String?       @db.VarChar(500)
+  subtitle            String?       @db.VarChar(500)
+  description         String?       @db.Text
+  excerpt             String?       @db.Text
+  bodyText            String?       @db.LongText
+  filePath            String?       @db.VarChar(500)
+  fileSizeBytes       BigInt?
+  fileMimeType        String?       @db.VarChar(100)
+  pageCount           Int?
+  coverImageUrl       String?       @db.VarChar(500)
+  ogImageUrl          String?       @db.VarChar(500)
+  metaTitle           String?       @db.VarChar(255)
+  metaDescription     String?       @db.VarChar(500)
+  isbn                String?       @db.VarChar(50)
+  publicationYear     Int?
+  publisher           String?       @db.VarChar(255)
+  edition             String?       @db.VarChar(100)
+  language            Language      @default(TA)
+  readingTimeMinutes  Int?
+  wordCount           Int?
+  viewCount           Int           @default(0)
+  uniqueViewCount     Int           @default(0)
+  downloadCount       Int           @default(0)
+  shareCount          Int           @default(0)
+  averageRating       Decimal?      @db.Decimal(3, 2)
+  reviewCount         Int           @default(0)
+  isPremium           Boolean       @default(false)
+  isFeatured          Boolean       @default(false)
+  status              ContentStatus @default(DRAFT)
+  publishedAt         DateTime?
+  scheduledAt         DateTime?
+  sortOrder           Int           @default(0)
+
+  seriesId            Int?
+  series              Series?       @relation(fields: [seriesId], references: [id], onDelete: SetNull)
+  seriesOrder         Int?
+
+  createdById         Int
+  createdBy           User          @relation("ContentCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  updatedById         Int?
+  updatedBy           User?         @relation("ContentUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+
+  deletedAt           DateTime?
+  createdAt           DateTime      @default(now())
+  updatedAt           DateTime      @updatedAt
+
+  contentAuthors      ContentAuthor[]
+  contentCategories   ContentCategory[]
+  contentTags         ContentTag[]
+  readingProgress     ReadingProgress[]
+  bookmarks           Bookmark[]
+  highlights          Highlight[]
+  favorites           Favorite[]
+  reviews             Review[]
+  comments            Comment[]
+  activityLogs        ActivityLog[]
+
+  @@index([slug])
+  @@index([status])
+  @@index([type])
+  @@index([isPremium])
+  @@index([publishedAt])
+  @@index([isFeatured])
+  @@index([deletedAt])
+  @@index([status, type, publishedAt])
+}
+
+model ContentAuthor {
+  contentId  Int
+  content    Content           @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  authorId   Int
+  author     Author            @relation(fields: [authorId], references: [id], onDelete: Restrict)
+  role       ContentAuthorRole @default(AUTHOR)
+  sortOrder  Int               @default(0)
+
+  @@id([contentId, authorId, role])
+  @@index([authorId])
+}
+
+model ContentCategory {
+  contentId   Int
+  content     Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  categoryId  Int
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, categoryId])
+  @@index([categoryId])
+}
+
+model ContentTag {
+  contentId  Int
+  content    Content @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  tagId      Int
+  tag        Tag     @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([contentId, tagId])
+  @@index([tagId])
+}
+
+model Series {
+  id              Int      @id @default(autoincrement())
+  slug            String   @unique @db.VarChar(150)
+  nameTamil       String   @db.VarChar(255)
+  nameEnglish     String?  @db.VarChar(255)
+  description     String?  @db.Text
+  coverImageUrl   String?  @db.VarChar(500)
+  isCompleted     Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  contents        Content[]
+}
+
+// ============================================================================
+// READING EXPERIENCE
+// ============================================================================
+
+model ReadingProgress {
+  id              Int       @id @default(autoincrement())
+  userId          Int
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId       Int
+  content         Content   @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  lastPage        Int       @default(1)
+  totalPages      Int?
+  percentComplete Decimal   @default(0) @db.Decimal(5, 2)
+  completedAt     DateTime?
+  lastReadAt      DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([userId, contentId])
+  @@index([contentId])
+}
+
+model Bookmark {
+  id          Int      @id @default(autoincrement())
+  userId      Int
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId   Int
+  content     Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  pageNumber  Int
+  note        String?  @db.Text
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([contentId])
+}
+
+model Highlight {
+  id          Int             @id @default(autoincrement())
+  userId      Int
+  user        User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId   Int
+  content     Content         @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  pageNumber  Int
+  text        String          @db.Text
+  color       HighlightColor  @default(YELLOW)
+  note        String?         @db.Text
+  createdAt   DateTime        @default(now())
+
+  @@index([userId])
+  @@index([contentId])
+}
+
+model Favorite {
+  id         Int      @id @default(autoincrement())
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId  Int
+  content    Content  @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  createdAt  DateTime @default(now())
+
+  @@unique([userId, contentId])
+  @@index([contentId])
+}
+
+// ============================================================================
+// COMMUNITY
+// ============================================================================
+
+model Review {
+  id              Int          @id @default(autoincrement())
+  userId          Int
+  user            User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId       Int
+  content         Content      @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  rating          Int
+  title           String?      @db.VarChar(255)
+  body            String?      @db.Text
+  status          ReviewStatus @default(PENDING)
+  helpfulCount    Int          @default(0)
+  reportedCount   Int          @default(0)
+  moderatedById   Int?
+  moderatedBy     User?        @relation("ReviewsModeratedBy", fields: [moderatedById], references: [id], onDelete: SetNull)
+  moderatedAt     DateTime?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  votes           ReviewVote[]
+
+  @@unique([userId, contentId])
+  @@index([contentId])
+  @@index([status])
+}
+
+model Comment {
+  id              Int            @id @default(autoincrement())
+  userId          Int
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  contentId       Int
+  content         Content        @relation(fields: [contentId], references: [id], onDelete: Cascade)
+  parentId        Int?
+  parent          Comment?       @relation("CommentReplies", fields: [parentId], references: [id], onDelete: SetNull)
+  replies         Comment[]      @relation("CommentReplies")
+  body            String         @db.Text
+  status          CommentStatus  @default(PENDING)
+  likeCount       Int            @default(0)
+  reportedCount   Int            @default(0)
+  editedAt        DateTime?
+  deletedAt       DateTime?
+  createdAt       DateTime       @default(now())
+
+  @@index([contentId])
+  @@index([parentId])
+  @@index([status])
+}
+
+model ReviewVote {
+  id         Int      @id @default(autoincrement())
+  reviewId   Int
+  review     Review   @relation(fields: [reviewId], references: [id], onDelete: Cascade)
+  userId     Int
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  isHelpful  Boolean
+  createdAt  DateTime @default(now())
+
+  @@unique([reviewId, userId])
+}
+
+// ============================================================================
+// MONETIZATION
+// ============================================================================
+
+model SubscriptionPlan {
+  id                  Int       @id @default(autoincrement())
+  slug                String    @unique @db.VarChar(100)
+  nameTamil           String    @db.VarChar(255)
+  nameEnglish         String    @db.VarChar(255)
+  descriptionTamil    String?   @db.Text
+  descriptionEnglish  String?   @db.Text
+  priceInr            Decimal   @db.Decimal(10, 2)
+  durationDays        Int
+  features            Json?
+  isActive            Boolean   @default(true)
+  isFeatured          Boolean   @default(false)
+  sortOrder           Int       @default(0)
+  razorpayPlanId      String?   @db.VarChar(100)
+  createdAt           DateTime  @default(now())
+  updatedAt           DateTime  @updatedAt
+
+  subscriptions       Subscription[]
+  payments            Payment[]
+}
+
+model Subscription {
+  id                    Int                 @id @default(autoincrement())
+  userId                Int
+  user                  User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  planId                Int
+  plan                  SubscriptionPlan    @relation(fields: [planId], references: [id], onDelete: Restrict)
+  startedAt             DateTime            @default(now())
+  expiresAt             DateTime
+  status                SubscriptionStatus  @default(ACTIVE)
+  cancelledAt           DateTime?
+  cancellationReason    String?             @db.VarChar(500)
+  autoRenew             Boolean             @default(false)
+  lastPaymentId         Int?
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
+
+  payments              Payment[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([expiresAt])
+}
+
+model Payment {
+  id                    Int             @id @default(autoincrement())
+  userId                Int
+  user                  User            @relation(fields: [userId], references: [id], onDelete: Restrict)
+  subscriptionId        Int?
+  subscription          Subscription?   @relation(fields: [subscriptionId], references: [id], onDelete: SetNull)
+  planId                Int?
+  plan                  SubscriptionPlan? @relation(fields: [planId], references: [id], onDelete: Restrict)
+  couponId              Int?
+  coupon                Coupon?         @relation(fields: [couponId], references: [id], onDelete: SetNull)
+  razorpayOrderId       String?         @db.VarChar(100)
+  razorpayPaymentId     String?         @unique @db.VarChar(100)
+  razorpaySignature     String?         @db.VarChar(255)
+  razorpayRefundId      String?         @db.VarChar(100)
+  amount                Decimal         @db.Decimal(10, 2)
+  discountAmount        Decimal         @default(0) @db.Decimal(10, 2)
+  taxAmount             Decimal         @default(0) @db.Decimal(10, 2)
+  netAmount             Decimal         @db.Decimal(10, 2)
+  currency              String          @default("INR") @db.VarChar(10)
+  paymentMethod         PaymentMethod?
+  status                PaymentStatus   @default(CREATED)
+  failureReason         String?         @db.VarChar(500)
+  refundedAmount        Decimal?        @db.Decimal(10, 2)
+  refundedAt            DateTime?
+  invoiceNumber         String?         @unique @db.VarChar(50)
+  receiptUrl            String?         @db.VarChar(500)
+  ipAddress             String?         @db.VarChar(45)
+  paidAt                DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  couponUsages          CouponUsage[]
+  invoice               Invoice?
+
+  @@index([razorpayPaymentId])
+  @@index([razorpayOrderId])
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Coupon {
+  id            Int         @id @default(autoincrement())
+  code          String      @unique @db.VarChar(50)
+  type          CouponType
+  value         Decimal     @db.Decimal(10, 2)
+  maxUses       Int?
+  usedCount     Int         @default(0)
+  perUserLimit  Int         @default(1)
+  minAmount     Decimal?    @db.Decimal(10, 2)
+  validFrom     DateTime    @default(now())
+  validUntil    DateTime?
+  appliesTo     Json?
+  isActive      Boolean     @default(true)
+  createdById   Int
+  createdBy     User        @relation("CouponsCreatedBy", fields: [createdById], references: [id], onDelete: Restrict)
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  usages        CouponUsage[]
+  payments      Payment[]
+
+  @@index([code])
+  @@index([isActive])
+  @@index([validUntil])
+}
+
+model CouponUsage {
+  id              Int      @id @default(autoincrement())
+  couponId        Int
+  coupon          Coupon   @relation(fields: [couponId], references: [id], onDelete: Cascade)
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  paymentId       Int
+  payment         Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  discountApplied Decimal  @db.Decimal(10, 2)
+  usedAt          DateTime @default(now())
+
+  @@index([couponId])
+  @@index([userId])
+}
+
+model Invoice {
+  id              Int      @id @default(autoincrement())
+  invoiceNumber   String   @unique @db.VarChar(50)
+  paymentId       Int      @unique
+  payment         Payment  @relation(fields: [paymentId], references: [id], onDelete: Cascade)
+  userId          Int
+  user            User     @relation(fields: [userId], references: [id], onDelete: Restrict)
+  billingName     String   @db.VarChar(255)
+  billingEmail    String   @db.VarChar(255)
+  billingPhone    String?  @db.VarChar(20)
+  billingAddress  String?  @db.Text
+  gstNumber       String?  @db.VarChar(50)
+  subtotal        Decimal  @db.Decimal(10, 2)
+  gstAmount       Decimal  @default(0) @db.Decimal(10, 2)
+  totalAmount     Decimal  @db.Decimal(10, 2)
+  currency        String   @default("INR") @db.VarChar(10)
+  issuedAt        DateTime @default(now())
+  pdfUrl          String?  @db.VarChar(500)
+  sentAt          DateTime?
+  createdAt       DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ============================================================================
+// OPERATIONS & OBSERVABILITY
+// ============================================================================
+
+model Notification {
+  id         Int               @id @default(autoincrement())
+  userId     Int
+  user       User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type       NotificationType
+  title      String            @db.VarChar(255)
+  body       String            @db.Text
+  linkUrl    String?           @db.VarChar(500)
+  readAt     DateTime?
+  createdAt  DateTime          @default(now())
+
+  @@index([userId, readAt])
+  @@index([type])
+}
+
+model EmailLog {
+  id                Int          @id @default(autoincrement())
+  userId            Int?
+  user              User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  toEmail           String       @db.VarChar(255)
+  emailType         String       @db.VarChar(100)
+  subject           String       @db.VarChar(500)
+  templateId        String?      @db.VarChar(100)
+  providerMessageId String?      @db.VarChar(255)
+  status            EmailStatus  @default(QUEUED)
+  errorMessage      String?      @db.Text
+  sentAt            DateTime?
+  createdAt         DateTime     @default(now())
+
+  @@index([userId])
+  @@index([status])
+  @@index([sentAt])
+}
+
+model WebhookLog {
+  id            Int            @id @default(autoincrement())
+  source        WebhookSource
+  eventType     String         @db.VarChar(100)
+  eventId       String?        @db.VarChar(150)
+  payload       Json
+  signature     String?        @db.VarChar(500)
+  status        WebhookStatus  @default(RECEIVED)
+  errorMessage  String?        @db.Text
+  receivedAt    DateTime       @default(now())
+  processedAt   DateTime?
+
+  @@unique([source, eventId])
+  @@index([status])
+  @@index([receivedAt])
+}
+
+model AuditLog {
+  id          Int          @id @default(autoincrement())
+  userId      Int?
+  user        User?        @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action      AuditAction
+  entityType  String       @db.VarChar(100)
+  entityId    String?      @db.VarChar(100)
+  changes     Json?
+  ipAddress   String?      @db.VarChar(45)
+  userAgent   String?      @db.VarChar(500)
+  createdAt   DateTime     @default(now())
+
+  @@index([userId])
+  @@index([entityType, entityId])
+  @@index([action])
+  @@index([createdAt])
+}
+
+model ActivityLog {
+  id         Int           @id @default(autoincrement())
+  userId     Int?
+  user       User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+  contentId  Int?
+  content    Content?      @relation(fields: [contentId], references: [id], onDelete: SetNull)
+  eventType  ActivityEvent
+  metadata   Json?
+  sessionId  String?       @db.VarChar(100)
+  ipAddress  String?       @db.VarChar(45)
+  userAgent  String?       @db.VarChar(500)
+  referrer   String?       @db.VarChar(500)
+  createdAt  DateTime      @default(now())
+
+  @@index([createdAt])
+  @@index([eventType])
+  @@index([userId])
+  @@index([contentId])
+}
+
+model Setting {
+  key           String   @id @db.VarChar(150)
+  value         Json
+  description   String?  @db.VarChar(500)
+  updatedById   Int?
+  updatedBy     User?    @relation("SettingsUpdatedBy", fields: [updatedById], references: [id], onDelete: SetNull)
+  updatedAt     DateTime @updatedAt
+}
+
+model NewsletterSubscriber {
+  id                Int       @id @default(autoincrement())
+  email             String    @unique @db.VarChar(255)
+  userId            Int?      @unique
+  user              User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
+  source            String?   @db.VarChar(100)
+  subscribedAt      DateTime  @default(now())
+  unsubscribedAt    DateTime?
+  unsubscribeToken  String    @unique @db.VarChar(255)
+  createdAt         DateTime  @default(now())
+
+  @@index([unsubscribedAt])
+}
+
+model ContactSubmission {
+  id              Int            @id @default(autoincrement())
+  name            String         @db.VarChar(150)
+  email           String         @db.VarChar(255)
+  phone           String?        @db.VarChar(20)
+  subject         String         @db.VarChar(255)
+  message         String         @db.Text
+  status          ContactStatus  @default(NEW)
+  assignedToId    Int?
+  assignedTo      User?          @relation("ContactAssignedTo", fields: [assignedToId], references: [id], onDelete: SetNull)
+  internalNotes   String?        @db.Text
+  ipAddress       String?        @db.VarChar(45)
+  createdAt       DateTime       @default(now())
+  repliedAt       DateTime?
+
+  @@index([status])
+  @@index([assignedToId])
+}
+
+model MediaAsset {
+  id                Int      @id @default(autoincrement())
+  uploadedById      Int
+  uploadedBy        User     @relation(fields: [uploadedById], references: [id], onDelete: Restrict)
+  originalFilename  String   @db.VarChar(500)
+  storedPath        String   @db.VarChar(500)
+  mimeType          String   @db.VarChar(100)
+  sizeBytes         BigInt
+  width             Int?
+  height            Int?
+  alt               String?  @db.VarChar(500)
+  usedInCount       Int      @default(0)
+  createdAt         DateTime @default(now())
+
+  @@index([uploadedById])
+  @@index([mimeType])
+}

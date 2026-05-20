@@ -63,3 +63,5 @@ prisma/generated/
 
 # --- Claude Code state ---
 .claude/
+
+/src/generated/prisma
