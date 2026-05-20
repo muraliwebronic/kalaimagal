@@ -14,7 +14,7 @@
 | Database (prod) | MySQL on Hostinger (or PlanetScale free tier) | User's existing Hostinger plan |
 | ORM | **Prisma** | User request — clean schema management |
 | PDF → WebP | Node-native (`pdf-poppler` + `sharp`) | Replaces PHP/Imagick |
-| **PDF storage (dev)** | Local filesystem `./storage/pdfs/` and `./storage/cache/` | XAMPP-friendly |
+| **PDF storage (dev)** | Local filesystem `./public/uploads/pdfs/` and `./public/uploads/cache/` (⚠ web-accessible — dev convenience; ⚠ MUST swap to R2 before prod) | User decision 2026-05-20 — was `./storage/` outside web root |
 | **PDF storage (prod)** | **Cloudflare R2** (S3-compatible, zero egress fees) | Locked — cheapest viable + Vercel-compatible |
 | **Hosting (prod)** | **Vercel free tier** | Locked |
 | **Domain (prod)** | **Single domain**; admin at `/admin/*` | Locked — no api subdomain split |

@@ -31,8 +31,8 @@ Guidance for Claude Code (claude.ai/code) when working in this repository.
 | Styling | Tailwind v4 + shadcn/ui (editorial theme) |
 | Fonts | `Noto_Sans_Tamil` (body) + `Lora` or `Crimson_Pro` (English display) |
 | PDF → WebP | `pdf-poppler` + `sharp` (replaces PHP/Imagick) |
-| Storage (dev) | Local FS at `./storage/pdfs/` and `./storage/cache/` |
-| Storage (prod) | Cloudflare R2 (S3-compatible) via `@aws-sdk/client-s3` |
+| Storage (dev) | Local FS at `./public/uploads/pdfs/` and `./public/uploads/cache/` (⚠ web-accessible — dev convenience only) |
+| Storage (prod) | Cloudflare R2 (S3-compatible) via `@aws-sdk/client-s3` — **REQUIRED swap before launch** |
 | Payments | Razorpay Orders API (test mode in v1) — **no** Subscriptions API |
 | Email | Nodemailer + SMTP (provider TBD) |
 | Hosting (prod) | Vercel free tier |
@@ -142,11 +142,11 @@ prisma/
 ├── schema.prisma
 ├── migrations/
 └── seed.ts
-storage/                         # local-only, gitignored
-├── pdfs/
-└── cache/
 public/
-└── brand/                       # logos, OG images
+├── brand/                       # logos, OG images
+└── uploads/                     # dev-only PDF + WebP cache (gitignored)
+    ├── pdfs/
+    └── cache/
 ```
 
 ---

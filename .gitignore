@@ -27,9 +27,10 @@ coverage/
 .env.*
 !.env.example
 
-# --- Storage (PDFs + WebP cache live outside web root) ---
-storage/
-!storage/.gitkeep
+# --- Uploads (dev: public/uploads; prod: Cloudflare R2) ---
+# Don't commit user-uploaded PDFs or generated WebP cache; keep the dir.
+/public/uploads/*
+!/public/uploads/.gitkeep
 
 # --- Logs ---
 npm-debug.log*
