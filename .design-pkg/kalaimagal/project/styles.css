@@ -1,0 +1,302 @@
+/* Kalaimagal · கலைமகள் — design tokens */
+
+:root {
+  /* Core palette */
+  --paper:         #FAF7F2;   /* warm off-white */
+  --sandalwood:    #F1E6D2;   /* sandalwood beige */
+  --sandalwood-2:  #E8DAC0;   /* deeper sandalwood */
+  --border:        #E2D6BD;   /* warm border */
+  --border-soft:   #ECE2CC;
+  --ink:           #1B1410;   /* deep ink, slightly warm */
+  --ink-2:         #4A3A30;   /* secondary ink */
+  --ink-3:         #7A6A5C;   /* tertiary ink */
+
+  /* Traditional South Indian tones */
+  --kumkum:        #9B1B2E;   /* kumkum red */
+  --burgundy:      #7A1F2B;   /* deep burgundy */
+  --turmeric:      #D97F2E;   /* saffron / turmeric */
+  --turmeric-deep: #B8631C;
+  --gold:          #B8884A;   /* temple gold */
+  --gold-pale:     #D9B97C;
+  --peacock:       #1F5559;   /* peacock teal */
+
+  /* Type */
+  --tamil:   "Noto Serif Tamil", "Noto Sans Tamil", serif;
+  --display: "Cormorant Garamond", "EB Garamond", Georgia, serif;
+  --sans:    "Inter", system-ui, -apple-system, sans-serif;
+  --mono:    "JetBrains Mono", ui-monospace, monospace;
+}
+
+/* ───── Base reset for artboards ───── */
+.km {
+  font-family: var(--display);
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+.km *, .km *::before, .km *::after { box-sizing: border-box; }
+.km :where(h1,h2,h3,h4,h5,h6,p,figure) { margin: 0; }
+.km :where(ul,ol) { margin: 0; padding: 0; list-style: none; }
+.km :where(button) { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+.km :where(input, textarea, select) { font: inherit; color: inherit; }
+
+/* Tamil text — needs more line-height and slightly more letter air */
+.km .ta {
+  font-family: var(--tamil);
+  font-feature-settings: "kern";
+  letter-spacing: 0;
+  line-height: 1.5;
+}
+.km .ta-display {
+  font-family: var(--tamil);
+  line-height: 1.32;
+  font-weight: 500;
+}
+
+/* Display (English) */
+.km .display {
+  font-family: var(--display);
+  font-weight: 500;
+  letter-spacing: -0.005em;
+  line-height: 1.12;
+}
+
+/* Eyebrow / overline */
+.km .eyebrow {
+  font-family: var(--display);
+  font-style: italic;
+  font-weight: 500;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: var(--burgundy);
+}
+.km .eyebrow-sm { font-size: 10px; letter-spacing: 0.22em; }
+
+/* ───── Decorative motifs (pure CSS / inline SVG) ───── */
+
+/* A trim used at the top/bottom of pages — a tight geometric Tamil border. */
+.km .trim {
+  height: 14px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='32' height='14' viewBox='0 0 32 14'><g fill='none' stroke='%237A1F2B' stroke-width='1'><path d='M0 7h32'/><path d='M16 1l4 6-4 6-4-6z' fill='%237A1F2B' fill-opacity='.85'/><circle cx='4' cy='7' r='1.2' fill='%237A1F2B'/><circle cx='28' cy='7' r='1.2' fill='%237A1F2B'/></g></svg>");
+  background-repeat: repeat-x;
+  background-position: center;
+}
+.km .trim-thin {
+  height: 8px;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='20' height='8' viewBox='0 0 20 8'><g fill='%23B8884A'><circle cx='2' cy='4' r='1'/><circle cx='10' cy='4' r='1.4'/><circle cx='18' cy='4' r='1'/></g></svg>");
+  background-repeat: repeat-x;
+  background-position: center;
+}
+
+/* Section divider — diamond with side lines */
+.km .divider {
+  display: flex; align-items: center; gap: 14px;
+  color: var(--gold);
+}
+.km .divider::before, .km .divider::after {
+  content: ""; flex: 1; height: 1px;
+  background: linear-gradient(to right, transparent, currentColor, transparent);
+  opacity: .6;
+}
+.km .divider-diamond {
+  width: 10px; height: 10px; transform: rotate(45deg);
+  background: var(--burgundy);
+  position: relative;
+}
+.km .divider-diamond::before {
+  content: ""; position: absolute; inset: 2px;
+  background: var(--gold-pale);
+}
+
+/* Sandalwood paper — subtle warm noise */
+.km .paper-warm {
+  background:
+    radial-gradient(circle at 10% 0%, rgba(217,127,46,.05), transparent 40%),
+    radial-gradient(circle at 90% 100%, rgba(155,27,46,.04), transparent 40%),
+    var(--paper);
+}
+.km .paper-sandal {
+  background:
+    repeating-linear-gradient(0deg, rgba(184,136,74,.025) 0 1px, transparent 1px 3px),
+    var(--sandalwood);
+}
+
+/* Card frame — double-rule with inner padding (traditional manuscript feel) */
+.km .frame {
+  border: 1px solid var(--border);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px var(--border-soft);
+  padding: 18px;
+  background: var(--paper);
+}
+.km .frame-burgundy {
+  border-color: var(--burgundy);
+  box-shadow: inset 0 0 0 3px var(--paper), inset 0 0 0 4px rgba(122,31,43,.4);
+}
+
+/* ───── Buttons ───── */
+.km .btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  padding: 11px 22px;
+  font-family: var(--display);
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  border: 1px solid transparent;
+  transition: all .15s;
+  position: relative;
+}
+.km .btn-primary {
+  background: var(--burgundy);
+  color: #FFF6E5;
+  border-color: var(--burgundy);
+  box-shadow: 0 0 0 1px var(--paper) inset, 0 0 0 2px var(--burgundy) inset;
+  padding: 11px 26px;
+}
+.km .btn-primary:hover { background: var(--kumkum); }
+.km .btn-ghost {
+  background: transparent;
+  color: var(--ink);
+  border-color: var(--border);
+}
+.km .btn-ghost:hover { border-color: var(--burgundy); color: var(--burgundy); }
+.km .btn-gold {
+  background: var(--gold);
+  color: #1B1410;
+  border-color: var(--gold);
+}
+
+/* ───── Badges ───── */
+.km .badge {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 3px 9px;
+  font-family: var(--display);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  border: 1px solid var(--border);
+  background: var(--paper);
+  color: var(--ink-2);
+}
+.km .badge-premium { background: var(--burgundy); color: #FFE8B8; border-color: var(--burgundy); }
+.km .badge-free    { background: var(--peacock); color: #E8F4ED; border-color: var(--peacock); }
+.km .badge-gold    { background: var(--gold-pale); color: #5A3A1A; border-color: var(--gold); }
+.km .badge-chip    { background: var(--sandalwood); color: var(--ink-2); border-color: var(--border); border-radius: 999px; padding: 3px 11px; text-transform: none; letter-spacing: 0.02em; font-weight: 500; font-style: italic; }
+
+/* ───── Cover placeholder ───── */
+.km .cover {
+  position: relative;
+  aspect-ratio: 3/4;
+  background: var(--burgundy);
+  color: #FFE8B8;
+  display: flex; flex-direction: column;
+  padding: 16px;
+  font-family: var(--tamil);
+  overflow: hidden;
+  box-shadow:
+    0 1px 0 rgba(255,232,184,.18) inset,
+    0 -1px 0 rgba(0,0,0,.4) inset,
+    0 12px 22px -10px rgba(27,20,16,.35);
+}
+.km .cover::before {
+  /* double-rule frame */
+  content: "";
+  position: absolute; inset: 8px;
+  border: 1px solid rgba(255,232,184,.55);
+  outline: 1px solid rgba(255,232,184,.18);
+  outline-offset: 3px;
+  pointer-events: none;
+}
+.km .cover::after {
+  /* corner ornaments */
+  content: "";
+  position: absolute; inset: 14px;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><g fill='none' stroke='rgba(255,232,184,.7)' stroke-width='.5'><path d='M0 8 Q4 4 8 0'/><path d='M100 8 Q96 4 92 0'/><path d='M0 92 Q4 96 8 100'/><path d='M100 92 Q96 96 92 100'/></g></svg>");
+}
+.km .cover .cover-emblem {
+  align-self: center;
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 14px;
+  letter-spacing: 0.2em;
+  color: var(--gold-pale);
+  margin-bottom: 8px;
+}
+.km .cover .cover-title {
+  font-family: var(--tamil);
+  font-size: 22px;
+  line-height: 1.25;
+  text-align: center;
+  margin-top: auto;
+}
+.km .cover .cover-author {
+  margin-top: 10px;
+  font-family: var(--display);
+  font-style: italic;
+  text-align: center;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: var(--gold-pale);
+}
+
+/* Cover color variants */
+.km .cover-sand    { background: var(--sandalwood-2); color: var(--burgundy); }
+.km .cover-sand .cover-emblem, .km .cover-sand .cover-author { color: var(--burgundy); }
+.km .cover-sand::before { border-color: rgba(122,31,43,.55); outline-color: rgba(122,31,43,.18); }
+.km .cover-sand::after { background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><g fill='none' stroke='rgba(122,31,43,.7)' stroke-width='.5'><path d='M0 8 Q4 4 8 0'/><path d='M100 8 Q96 4 92 0'/><path d='M0 92 Q4 96 8 100'/><path d='M100 92 Q96 96 92 100'/></g></svg>"); }
+
+.km .cover-teal    { background: var(--peacock); color: #F0E6CC; }
+.km .cover-teal .cover-emblem, .km .cover-teal .cover-author { color: var(--gold-pale); }
+
+.km .cover-gold    { background: var(--gold); color: #1B1410; }
+.km .cover-gold .cover-emblem, .km .cover-gold .cover-author { color: var(--burgundy); }
+.km .cover-gold::before { border-color: rgba(27,20,16,.45); outline-color: rgba(27,20,16,.15); }
+
+.km .cover-ink     { background: #221814; color: var(--gold-pale); }
+
+.km .cover-kumkum  { background: var(--kumkum); }
+
+/* ───── Inputs ───── */
+.km .field {
+  display: flex; flex-direction: column; gap: 6px;
+}
+.km .field label {
+  font-family: var(--display);
+  font-style: italic;
+  font-size: 13px;
+  color: var(--ink-2);
+  letter-spacing: 0.02em;
+}
+.km .field input, .km .field textarea {
+  border: 1px solid var(--border);
+  background: var(--paper);
+  padding: 11px 14px;
+  font-family: var(--display);
+  font-size: 15px;
+  outline: 0;
+  transition: border-color .15s, box-shadow .15s;
+}
+.km .field input:focus, .km .field textarea:focus {
+  border-color: var(--burgundy);
+  box-shadow: 0 0 0 3px rgba(122,31,43,.08);
+}
+
+/* ───── Utility ───── */
+.km .row { display: flex; }
+.km .col { display: flex; flex-direction: column; }
+.km .center { display: flex; align-items: center; justify-content: center; }
+.km .gold-text { color: var(--gold); }
+.km .burgundy-text { color: var(--burgundy); }
+.km .turmeric-text { color: var(--turmeric); }
+.km .ink-2 { color: var(--ink-2); }
+.km .ink-3 { color: var(--ink-3); }
+
+.km hr.rule {
+  border: 0;
+  border-top: 1px solid var(--border);
+  margin: 0;
+}

@@ -1,19 +1,23 @@
 import type { Metadata } from "next";
-import { Noto_Sans_Tamil, Lora, JetBrains_Mono } from "next/font/google";
+import { Noto_Serif_Tamil, Cormorant_Garamond, JetBrains_Mono } from "next/font/google";
 import { getUserLang } from "@/lib/user-lang";
 import { JsonLd, organizationLd, websiteLd } from "@/lib/jsonld";
 import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
-const notoTamil = Noto_Sans_Tamil({
-  variable: "--font-sans",
+// Tamil display + body — Noto Serif Tamil gives the editorial / manuscript
+// feel the redesign calls for (vs Noto Sans Tamil which reads more modern).
+const tamilSerif = Noto_Serif_Tamil({
+  variable: "--font-tamil",
   subsets: ["tamil", "latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
 });
 
-const lora = Lora({
-  variable: "--font-heading",
+// English display — Cormorant Garamond reads as a classical book typeface
+// with italics for editorial captions.
+const cormorant = Cormorant_Garamond({
+  variable: "--font-display",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   style: ["normal", "italic"],
@@ -28,10 +32,11 @@ const jetbrains = JetBrains_Mono({
 
 export const metadata: Metadata = {
   title: {
-    default: "Kalaimagal — கலைமகள் | The digital home of Tamil literature",
+    default: "Kalaimagal — கலைமகள் | The reading home for Tamil literature",
     template: "%s · Kalaimagal",
   },
-  description: "தமிழ் இலக்கியத்தின் டிஜிட்டல் வீடு — Tamil e-books and essays, curated and edited for serious readers.",
+  description:
+    "தமிழ் இலக்கியத்தின் வாசிப்பு வீடு — Tamil e-books and essays, from the classical to the contemporary.",
 };
 
 export default async function RootLayout({
@@ -44,12 +49,12 @@ export default async function RootLayout({
     <html
       lang={userLang}
       data-lang={userLang}
-      className={`${notoTamil.variable} ${lora.variable} ${jetbrains.variable} h-full antialiased`}
+      className={`${tamilSerif.variable} ${cormorant.variable} ${jetbrains.variable} h-full antialiased`}
     >
       <head>
         <JsonLd data={[organizationLd(), websiteLd()]} />
       </head>
-      <body className="min-h-full flex flex-col">
+      <body className="min-h-full flex flex-col bg-paper text-ink font-display">
         {children}
         <Toaster position="bottom-right" richColors closeButton />
       </body>

@@ -1,74 +1,97 @@
 import Link from "next/link";
-import { BiLabel } from "@/components/ui/BiLabel";
-import { Separator } from "@/components/ui/separator";
-import { strings } from "@/lib/strings";
+import { Logo, Wordmark } from "@/components/brand/Logo";
 
-const footerSections = [
+const linkGroups = [
   {
-    heading: { ta: "தளம்", en: "Site" },
-    links: [
-      { href: "/about", label: strings.footer.about },
-      { href: "/contact", label: strings.footer.contact },
-      { href: "/blogs", label: strings.nav.articles },
-      { href: "/books", label: strings.nav.books },
+    headingTa: "தளம்",
+    headingEn: "Site",
+    items: [
+      { href: "/books", ta: "புத்தகங்கள்", en: "Books" },
+      { href: "/blogs", ta: "கட்டுரைகள்", en: "Articles" },
+      { href: "/authors", ta: "ஆசிரியர்கள்", en: "Authors" },
+      { href: "/account/subscription", ta: "சந்தா திட்டம்", en: "Subscribe" },
     ],
   },
   {
-    heading: { ta: "சட்டம்", en: "Legal" },
-    links: [
-      { href: "/legal/privacy", label: strings.footer.privacy },
-      { href: "/legal/terms", label: strings.footer.terms },
-      { href: "/legal/refunds", label: strings.footer.refunds },
+    headingTa: "சட்டம்",
+    headingEn: "Legal",
+    items: [
+      { href: "/legal/terms", ta: "பயன்பாட்டு நிபந்தனைகள்", en: "Terms" },
+      { href: "/legal/privacy", ta: "தனியுரிமை", en: "Privacy" },
+      { href: "/legal/refunds", ta: "திருப்பிச் செலுத்தல்", en: "Refunds" },
+      { href: "/contact", ta: "தொடர்பு", en: "Contact" },
     ],
   },
-] as const;
+  {
+    headingTa: "பின்தொடர்",
+    headingEn: "Follow",
+    items: [
+      { href: "#", ta: "Instagram", en: "Instagram" },
+      { href: "#", ta: "X / Twitter", en: "X / Twitter" },
+      { href: "#", ta: "YouTube", en: "YouTube" },
+      { href: "#", ta: "RSS", en: "RSS" },
+    ],
+  },
+];
 
 export function Footer({ supportEmail }: { supportEmail?: string }) {
   const year = new Date().getFullYear();
-  const rightsTa = strings.footer.rights.ta.replace("{year}", String(year));
-  const rightsEn = strings.footer.rights.en.replace("{year}", String(year));
-
   return (
-    <footer className="mt-auto border-t border-border/60 bg-secondary/30">
-      <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
-        <div className="grid grid-cols-1 gap-10 md:grid-cols-12">
-          {/* Brand block */}
+    <footer className="mt-auto bg-ink text-sandalwood">
+      {/* gradient bar — burgundy → turmeric → gold → burgundy */}
+      <div
+        className="h-1"
+        style={{
+          background:
+            "linear-gradient(to right, var(--burgundy), var(--turmeric), var(--gold), var(--burgundy))",
+        }}
+      />
+
+      <div className="container mx-auto px-6 md:px-10 py-12 md:py-14">
+        <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12">
+          {/* Brand block — 5/12 */}
           <div className="md:col-span-5">
-            <div data-bi lang="ta" className="font-heading text-3xl text-primary">
-              {strings.brand.name.ta}
+            <div className="flex items-center gap-3.5 mb-4">
+              <Logo size={40} />
+              <Wordmark size="md" color="var(--sandalwood)" />
             </div>
-            <div data-bi lang="en" className="font-heading text-3xl text-primary">
-              {strings.brand.name.en}
-            </div>
-            <p data-bi lang="ta" className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              {strings.brand.tagline.ta}
+            <p lang="ta" className="ta text-sm leading-relaxed text-gold-pale max-w-sm">
+              தமிழ் இலக்கியத்தின் வாசிப்பு வீடு — செவ்விலக்கியம் முதல் சமகால எழுத்து வரை.
             </p>
-            <p data-bi lang="en" className="mt-4 max-w-sm text-sm leading-relaxed text-muted-foreground">
-              {strings.brand.tagline.en}
+            <p
+              lang="en"
+              className="text-sm text-gold mt-1 max-w-sm"
+              style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}
+            >
+              A reading home for Tamil literature — from the classical to the contemporary.
             </p>
             {supportEmail && (
-              <p className="mt-6 text-xs text-muted-foreground">
-                <a href={`mailto:${supportEmail}`} className="hover:text-primary">
+              <p
+                className="mt-5 text-xs text-ink-3"
+                style={{ fontFamily: "var(--font-mono)", color: "#8A7A60" }}
+              >
+                <a href={`mailto:${supportEmail}`} className="hover:text-gold-pale">
                   {supportEmail}
                 </a>
               </p>
             )}
           </div>
 
-          {/* Link sections */}
-          {footerSections.map((section) => (
-            <div key={section.heading.en} className="md:col-span-3">
-              <h3 className="text-sm font-semibold tracking-wide">
-                <BiLabel ta={section.heading.ta} en={section.heading.en} variant="inline" />
-              </h3>
-              <ul className="mt-3 flex flex-col gap-2">
-                {section.links.map((link) => (
-                  <li key={link.href}>
-                    <Link
-                      href={link.href}
-                      className="text-sm text-muted-foreground hover:text-primary transition-colors"
-                    >
-                      <BiLabel ta={link.label.ta} en={link.label.en} variant="inline" />
+          {/* Link groups — 3 × 7/12 */}
+          {linkGroups.map((group) => (
+            <div key={group.headingEn} className="md:col-span-2">
+              <p className="eyebrow mb-3.5" style={{ color: "var(--turmeric)" }}>
+                <span data-bi lang="ta">{group.headingTa}</span>
+                <span data-bi lang="en">{group.headingEn}</span>
+              </p>
+              <ul className="flex flex-col gap-2">
+                {group.items.map((item, idx) => (
+                  <li key={`${group.headingEn}-${idx}`} className="text-sm" style={{ color: "var(--gold-pale)" }}>
+                    <Link href={item.href} className="hover:text-paper transition-colors">
+                      <span data-bi lang="ta" className="ta">{item.ta}</span>
+                      <span data-bi lang="en" style={{ fontFamily: "var(--font-display)" }}>
+                        {item.en}
+                      </span>
                     </Link>
                   </li>
                 ))}
@@ -76,22 +99,35 @@ export function Footer({ supportEmail }: { supportEmail?: string }) {
             </div>
           ))}
 
-          {/* Follow */}
-          <div className="md:col-span-1">
-            <h3 className="text-sm font-semibold tracking-wide">
-              <BiLabel ta={strings.footer.follow.ta} en={strings.footer.follow.en} variant="inline" />
-            </h3>
-            {/* Social links wire up from Settings later (Phase 3 admin UI) */}
-            <p className="mt-3 text-xs text-muted-foreground">—</p>
-          </div>
+          {/* Spacer to fill 12-col grid */}
+          <div className="md:col-span-1" />
         </div>
+      </div>
 
-        <Separator className="my-8" />
-
-        <div className="flex flex-col items-start gap-2 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between">
-          <p data-bi lang="ta">{rightsTa}</p>
-          <p data-bi lang="en">{rightsEn}</p>
-        </div>
+      <div
+        className="border-t px-6 md:px-10 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+        style={{ borderColor: "rgba(216,184,124,.15)" }}
+      >
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: 11,
+            color: "#8A7A60",
+            letterSpacing: "0.04em",
+          }}
+        >
+          © {year} KALAIMAGAL · <span lang="ta">சர்வ உரிமைகள் பாதுகாக்கப்பட்டவை</span>
+        </span>
+        <span
+          style={{
+            fontFamily: "var(--font-display)",
+            fontStyle: "italic",
+            fontSize: 12,
+            color: "#8A7A60",
+          }}
+        >
+          Made with care in Chennai · <span lang="ta">சென்னை</span>
+        </span>
       </div>
     </footer>
   );
