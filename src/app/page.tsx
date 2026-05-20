@@ -5,7 +5,9 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ContentCard, type ContentCardData } from "@/components/content/ContentCard";
 import { BiLabel } from "@/components/ui/BiLabel";
+import { SubscribePricingCard } from "@/components/payment/SubscribePricingCard";
 import { prisma } from "@/lib/db";
+import { getCurrentUser } from "@/lib/auth";
 import { getSettings, type HeroConfig } from "@/lib/settings";
 import { strings } from "@/lib/strings";
 
@@ -27,6 +29,35 @@ export default async function HomePage() {
   const taglineTa = settings["site.tagline_tamil"] ?? strings.brand.tagline.ta;
   const taglineEn = settings["site.tagline_english"] ?? strings.brand.tagline.en;
   const supportEmail = settings["site.support_email"];
+
+  // Subscribe card needs: monthly plan, the current user's contact info (if
+  // signed in), and whether they already have an active subscription.
+  const user = await getCurrentUser();
+  const isStaff =
+    user?.role === "EDITOR" || user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
+  const [monthlyPlan, fullUser, hasActiveSub] = await Promise.all([
+    prisma.subscriptionPlan.findUnique({ where: { slug: "monthly" } }),
+    user
+      ? prisma.user.findUnique({
+          where: { id: user.id },
+          select: { name: true, email: true, phone: true },
+        })
+      : Promise.resolve(null),
+    user && !isStaff
+      ? prisma.subscription
+          .findFirst({
+            where: {
+              userId: user.id,
+              status: "ACTIVE",
+              expiresAt: { gt: new Date() },
+            },
+            select: { id: true },
+          })
+          .then(Boolean)
+      : Promise.resolve(false),
+  ]);
+  // Skip the pricing card for staff + active subscribers
+  const showPricingCard = !isStaff && !hasActiveSub;
 
   // Featured books (PDFs) — featured first, then recent
   const featuredBooks = await prisma.content.findMany({
@@ -197,37 +228,58 @@ export default async function HomePage() {
         </section>
 
         {/* Subscribe CTA */}
-        <section className="container mx-auto px-4 md:px-6 py-20 md:py-24">
-          <div className="mx-auto max-w-2xl text-center">
-            <h2
-              data-bi
-              lang="ta"
-              className="font-heading text-3xl md:text-4xl tracking-tight"
-            >
-              வாசிக்கத் தொடங்குங்கள்.
-            </h2>
-            <h2
-              data-bi
-              lang="en"
-              className="font-heading text-3xl md:text-4xl tracking-tight"
-            >
-              Start reading today.
-            </h2>
-            <p data-bi lang="ta" className="mt-6 text-base text-muted-foreground leading-relaxed">
-              மாதம் ₹99 — அனைத்து புத்தகங்களுக்கும், அனைத்து கட்டுரைகளுக்கும்
-              வரம்பற்ற அணுகல்.
-            </p>
-            <p data-bi lang="en" className="mt-6 text-base text-muted-foreground leading-relaxed">
-              ₹99/month — unlimited access to all books and articles.
-            </p>
-            <div className="mt-8 flex justify-center">
-              <Link href="/register" className={cn(buttonVariants({ size: "lg" }))}>
-                <span data-bi lang="ta">{strings.cta.subscribe.ta}</span>
-                <span data-bi lang="en">{strings.cta.subscribe.en}</span>
-              </Link>
+        {/* Subscribe pricing card — hidden for active subscribers + staff */}
+        {showPricingCard && monthlyPlan && (
+          <section className="border-t border-border/60">
+            <div className="container mx-auto px-4 md:px-6 py-20 md:py-24">
+              <div className="grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-center max-w-5xl mx-auto">
+                {/* Pitch */}
+                <div className="lg:col-span-7 lg:pr-4">
+                  <p className="text-xs uppercase tracking-wider text-muted-foreground mb-3">
+                    <span data-bi lang="ta">சந்தா</span>
+                    <span data-bi lang="en">Subscribe</span>
+                  </p>
+                  <h2
+                    data-bi
+                    lang="ta"
+                    className="font-heading text-3xl md:text-4xl lg:text-5xl tracking-tight leading-[1.15]"
+                  >
+                    வாசிக்கத் தொடங்குங்கள்.
+                  </h2>
+                  <h2
+                    data-bi
+                    lang="en"
+                    className="font-heading text-3xl md:text-4xl lg:text-5xl tracking-tight leading-[1.15]"
+                  >
+                    Start reading today.
+                  </h2>
+                  <p data-bi lang="ta" className="mt-5 text-base md:text-lg text-muted-foreground leading-relaxed max-w-prose">
+                    தமிழின் மிகச்சிறந்த புதினங்கள், கவிதைகள், கட்டுரைகள் — அனைத்தும் ஒரே இடத்தில்.
+                    திறமையாக டிஜிட்டலாக்கப்பட்டது, கவனமாக தேர்ந்தெடுக்கப்பட்டது.
+                  </p>
+                  <p data-bi lang="en" className="mt-5 text-base md:text-lg text-muted-foreground leading-relaxed max-w-prose">
+                    The best of Tamil novels, poetry, and essays — all in one place.
+                    Carefully curated, beautifully digitized.
+                  </p>
+                </div>
+
+                {/* Pricing card */}
+                <div className="lg:col-span-5">
+                  <SubscribePricingCard
+                    user={fullUser ?? null}
+                    plan={{
+                      slug: monthlyPlan.slug,
+                      priceInr: monthlyPlan.priceInr.toString(),
+                      durationDays: monthlyPlan.durationDays,
+                      nameTamil: monthlyPlan.nameTamil,
+                      nameEnglish: monthlyPlan.nameEnglish,
+                    }}
+                  />
+                </div>
+              </div>
             </div>
-          </div>
-        </section>
+          </section>
+        )}
       </main>
 
       <Footer supportEmail={supportEmail} />
