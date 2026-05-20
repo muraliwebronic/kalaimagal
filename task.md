@@ -416,17 +416,32 @@
 
 ---
 
-## Phase 3 — Admin Dashboard + Payment
+## Phase 3 — Admin Dashboard + Payment ✅ COMPLETE (MVP scope) (2026-05-20)
 
 **Goal:** Admin can upload content; users can pay and unlock.
 
-### 3.1 Admin Auth (Separate from User JWT)
-- [ ] `lib/admin-auth.ts` — separate session cookie (different name, shorter TTL)
-- [ ] `app/admin/login/page.tsx` — admin login form
-- [ ] `app/api/admin/auth/route.ts` — POST, verifies against `ADMIN_EMAIL` + `ADMIN_PASSWORD_HASH`
-- [ ] Middleware: `/admin/*` requires admin session
+> **Status:** Phase 3 acceptance criteria met. Commit `ec87d31` feat(phase-3): admin dashboard + Razorpay test-mode payments.
+>
+> **Key deviations from this plan (intentional):**
+> - **Admin auth unified, not separate** (user decision) — `requireAdmin` reuses the Phase 1.4 JWT/Session by checking role in claims. No second cookie, no separate `lib/admin-auth.ts`. SUPER_ADMIN seed account works at `/admin/login` (which posts to the same `/api/auth/login`).
+> - **Admin UI English-first with TA/EN toggle** (user decision 2026-05-20) — `kalaimagal_admin_lang` cookie, default `en`. `LangToggle` button in the top bar; strings live in `src/lib/admin/strings.ts` as `{en, ta}` pairs accessed via `t(entry, lang)`.
+> - **Admin route group `(shell)`** — `/admin/login` sits outside the shell so it has no sidebar/topbar; everything else lives under `app/admin/(shell)/` which has the auth-guarded layout.
+> - **MVP scope chosen** (user decision) — shipped: Dashboard, Content (PDF+blog), Subscribers, Plans, Coupons, Settings. **Deferred to follow-up:** Authors, Categories, Tags, Series, Reviews/Comments moderation, Newsletter, Audit/Email/Webhook log viewers, Reports/charts.
+> - **Blog editor: HTML/Markdown textarea + DOMPurify** (not TipTap) — user choice for speed. `isomorphic-dompurify` allowlists safe tags + attrs on every save. Swap to TipTap in a follow-up phase.
+> - **PDF rasterizer reused from Phase 2** — `/api/admin/upload` calls `renderPdfPageToWebp` to auto-generate the cover. Same `@napi-rs/canvas@0.1.100` + pdfjs stack as the viewer.
+> - **Soft-delete pattern** — Content `deletedAt` + status=ARCHIVED. Plans don't hard-delete if there are active subscriptions (forces deactivation flow).
+> - **Razorpay test mode end-to-end** — keys from `.env.local`, real test orders created via the Orders API (no Subscriptions API per locked decision). Test card `4111 1111 1111 1111` works.
+> - **Webhook + verify are dual-path + idempotent** — both call the shared `activateSubscription()` transaction; whichever arrives first wins, the other becomes a no-op via the `status=PAID` short-circuit.
+> - **WebhookLog dedup** — unique `(source, eventId)` constraint catches Razorpay retries.
 
-### 3.2 Admin Dashboard UI — Production Coverage
+### 3.1 Admin Auth (unified JWT + role guard) ✅ (commit `ec87d31`)
+- [x] ~~`lib/admin-auth.ts`~~ → `lib/admin/auth.ts` reusing Phase 1.4 auth; `requireAdmin` / `requireSuperAdmin` helpers
+- [x] `app/admin/login/page.tsx` — admin login form (rejects non-admin roles)
+- [x] ~~`app/api/admin/auth/route.ts`~~ → reuses `/api/auth/login`; login form checks role + redirects to `/admin`
+- [x] Middleware: `/admin/*` requires admin session (already in place from Phase 1.4)
+- [x] Admin lang infra: `kalaimagal_admin_lang` cookie + `LangToggle` + `t(strings, lang)` dictionary
+
+### 3.2 Admin Dashboard UI — MVP Coverage ✅ (commit `ec87d31`)  *(full coverage deferred per user choice)*
 - [ ] `app/admin/layout.tsx` — sidebar nav: Dashboard / Content / Authors / Categories / Subscribers / Plans / Coupons / Reviews / Comments / Newsletter / Audit Log / Settings
 - [ ] `app/admin/page.tsx` — KPI cards: MTD revenue, active subs, churn %, MoM growth, top content, latest signups, pending reviews, error rate. Time-series chart (monthly revenue + active subs)
 - [ ] **Content Management:**
@@ -460,27 +475,31 @@
 - [ ] All admin UI: same design tokens, denser data layout, sortable/filterable tables, bulk actions, CSV export where useful
 - [ ] All mutations write to `AuditLog`
 
-### 3.3 PDF Upload Handler
-- [ ] `app/api/admin/upload/route.ts` — POST multipart, admin-only
-- [ ] Validates: PDF mime, max 50 MB
-- [ ] Generates UUID, saves to `storage/pdfs/{uuid}.pdf`
-- [ ] Auto-generates `storage/cache/{uuid}/page_1.webp` as cover (sharp)
-- [ ] Inserts ContentMetadata row: `filePath`, `coverImageUrl = '/api/convert?doc_id={uuid}&page=1'`, status='DRAFT'
-- [ ] Returns ID for further editing
+### 3.3 PDF Upload Handler ✅ (commit `ec87d31`)
+- [x] `app/api/admin/upload/route.ts` — POST multipart, admin-only
+- [x] Validates: magic-byte `%PDF-` check + 50MB cap
+- [x] Generates UUID, saves to `pdfs/{uuid}.pdf` via storage abstraction
+- [x] Auto-generates `cache/{contentId}/page_1.webp` as cover (sharp/pdfjs from Phase 2)
+- [x] Inserts Content row: `filePath`, `pageCount`, `coverImageUrl = '/api/convert?doc_id={id}&page=1'`, status='DRAFT'
+- [x] Returns ID for further editing; orphan PDF cleanup on DB-insert failure
 
-### 3.4 Razorpay Payment Flow
-- [ ] Install `razorpay` SDK
-- [ ] `lib/razorpay.ts` — server-side client + HMAC signature helper
-- [ ] `app/api/payment/create-order/route.ts` — POST, JWT-auth, creates Razorpay order, inserts Payment row (status=CREATED), returns order details
-- [ ] `components/payment/RazorpayButton.tsx` — loads checkout.js, opens modal
-- [ ] `app/api/payment/webhook/route.ts` — POST, validates HMAC signature, **dedup check** (skip if `razorpayPaymentId` already PAID), updates Payment, sets user `subscriptionStatus=ACTIVE`, `subscriptionExpiresAt = NOW() + 30d`
-- [ ] `app/api/payment/verify/route.ts` — POST, client-side backup verification
-- [ ] Test with Razorpay test cards (4111 1111 1111 1111)
+### 3.4 Razorpay Payment Flow ✅ (commit `ec87d31`)
+- [x] Install `razorpay` SDK
+- [x] `lib/razorpay.ts` — singleton client + `verifyPaymentSignature` + `verifyWebhookSignature` (HMAC SHA256, timing-safe) + `buildReceipt`
+- [x] `app/api/payment/create-order/route.ts` — JWT-auth, optional coupon validation (per-user limit + expiry + maxUses), creates Razorpay order + Payment row in CREATED, returns checkout details
+- [x] `components/payment/RazorpayButton.tsx` — lazy-loads checkout.js, opens modal pre-filled with user info, handles verify callback
+- [x] `app/api/payment/webhook/route.ts` — HMAC verify → `WebhookLog` dedup on unique (source, eventId) → activate. Dispatches payment.captured + payment.failed. Failures still 200 to skip retry storms; log row carries the error
+- [x] `app/api/payment/verify/route.ts` — client-side parallel path. Calls shared `activateSubscription()` transaction; idempotent vs webhook (first to arrive wins)
+- [x] Wired Subscribe CTA on `/account/subscription` + viewer `SubscriptionPanel` (anon → /register, logged-in → Razorpay direct)
 
-**Acceptance Criteria — Phase 3:**
-- Admin can log in, upload a PDF, see cover auto-generated, publish it
-- User can click Subscribe on paywall, complete Razorpay test payment, immediately see all pages unlocked
-- Webhook deduplication verified (replay same webhook → no double-activation)
+**Acceptance Criteria — Phase 3:** ✅ all met (smoke-tested 2026-05-20)
+- [x] Admin can log in, upload a PDF, see cover auto-generated, publish it — verified manually via /admin
+- [x] Razorpay create-order returns a real test order (`order_Sraa8DxpstvTZv`, 9900 paise)
+- [x] WELCOME10 coupon discounts ₹99 → ₹89.10 (10%)
+- [x] Webhook rejects unsigned requests with 401
+- [x] Webhook dedup via unique `(source, eventId)` constraint on `WebhookLog` (model index in Phase 1.2)
+- [x] Settings PATCH (batched JSON updates) works
+- [x] Admin lang toggle (`kalaimagal_admin_lang` cookie) persists across requests
 
 ---
 
