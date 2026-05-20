@@ -16,6 +16,8 @@ export interface PdfReaderProps {
   isPremium: boolean;
   isSubscribed: boolean;
   isLoggedIn: boolean;
+  /** Required when isLoggedIn — used to pre-fill the Razorpay checkout. */
+  user?: { name: string; email: string; phone?: string | null } | null;
   titleTamil: string;
   titleEnglish?: string | null;
   authorNameTamil?: string | null;
@@ -34,6 +36,7 @@ export function PdfReader(props: PdfReaderProps) {
     isPremium,
     isSubscribed,
     isLoggedIn,
+    user,
     titleTamil,
     titleEnglish,
     authorNameTamil,
@@ -126,6 +129,7 @@ export function PdfReader(props: PdfReaderProps) {
                 authorNameTamil={authorNameTamil}
                 priceInr={priceInr}
                 isLoggedIn={isLoggedIn}
+                user={user}
               />
             </>
           ) : isMobile ? (

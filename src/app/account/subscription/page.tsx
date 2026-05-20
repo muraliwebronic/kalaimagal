@@ -1,16 +1,19 @@
-import Link from "next/link";
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { RazorpayButton } from "@/components/payment/RazorpayButton";
 
 export const metadata = { title: "சந்தா — Subscription" };
 
 export default async function SubscriptionPage() {
   const user = await getCurrentUser();
   if (!user) return null;
+
+  const fullUser = await prisma.user.findUnique({
+    where: { id: user.id },
+    select: { name: true, email: true, phone: true },
+  });
 
   const [subscription, payments, monthlyPlan] = await Promise.all([
     prisma.subscription.findFirst({
@@ -68,17 +71,13 @@ export default async function SubscriptionPage() {
                 <span lang="ta">இப்போது சந்தா எதுவும் இல்லை.</span>{" "}
                 <span lang="en" className="italic">No active subscription.</span>
               </p>
-              {monthlyPlan && (
-                <Link
-                  href="/books"
-                  className={cn(buttonVariants({ size: "lg" }))}
-                >
-                  ₹{monthlyPlan.priceInr.toString()} / month — சந்தா செலுத்து
-                </Link>
+              {monthlyPlan && fullUser && (
+                <RazorpayButton
+                  planSlug={monthlyPlan.slug}
+                  label={`₹${monthlyPlan.priceInr.toString()} / month — சந்தா செலுத்து`}
+                  user={{ name: fullUser.name, email: fullUser.email, phone: fullUser.phone }}
+                />
               )}
-              <p className="text-xs text-muted-foreground">
-                (Payment flow ships in Phase 3.)
-              </p>
             </div>
           )}
         </CardContent>
