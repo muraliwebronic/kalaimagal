@@ -1,34 +1,37 @@
+import Link from "next/link";
 import { LoginForm } from "./LoginForm";
+import { AuthCard } from "@/components/layout/AuthCard";
 
 export const metadata = {
-  title: "உள்நுழைய — Login",
+  title: "மீண்டும் வரவேற்கிறோம் — Welcome back",
 };
 
-export default function LoginPage({
+export default async function LoginPage({
   searchParams,
 }: {
   searchParams: Promise<{ next?: string }>;
 }) {
-  return <LoginPageInner searchParams={searchParams} />;
-}
-
-async function LoginPageInner({
-  searchParams,
-}: {
-  searchParams: Promise<{ next?: string }>;
-}) {
-  const params = await searchParams;
+  const { next } = await searchParams;
   return (
-    <div>
-      <div className="mb-8 text-center">
-        <h1 lang="ta" className="font-heading text-3xl tracking-tight">
-          மீண்டும் வரவேற்கிறோம்
-        </h1>
-        <p lang="en" className="mt-1 text-sm italic text-muted-foreground">
-          Welcome back
-        </p>
-      </div>
-      <LoginForm next={params.next} />
-    </div>
+    <AuthCard
+      titleTa="மீண்டும் வரவேற்கிறோம்"
+      titleEn="Welcome back"
+      footer={
+        <>
+          <span data-bi lang="ta">புதியவரா? </span>
+          <span data-bi lang="en">New to Kalaimagal? </span>
+          <Link
+            href="/register"
+            className="text-burgundy hover:text-kumkum ta"
+            style={{ borderBottom: "1px solid currentColor", fontStyle: "normal" }}
+          >
+            <span data-bi lang="ta">இங்கே பதிவு செய்</span>
+            <span data-bi lang="en">Register here</span>
+          </Link>
+        </>
+      }
+    >
+      <LoginForm next={next} />
+    </AuthCard>
   );
 }

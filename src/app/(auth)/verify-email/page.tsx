@@ -1,6 +1,5 @@
 import Link from "next/link";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { AuthCard } from "@/components/layout/AuthCard";
 
 export const metadata = { title: "மின்னஞ்சல் உறுதி — Verify email" };
 
@@ -21,7 +20,6 @@ export default async function VerifyEmailPage({
     );
   }
 
-  // POST to our own verify-email API server-side so the user doesn't need JS
   const res = await fetch(`${process.env.NEXT_PUBLIC_APP_URL}/api/auth/verify-email`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -50,29 +48,47 @@ export default async function VerifyEmailPage({
 
 function Result({ ta, en, ok }: { ta: string; en: string; ok: boolean }) {
   return (
-    <div className="text-center">
-      <div
-        className={`mx-auto mb-4 flex size-14 items-center justify-center rounded-full ${
-          ok ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive"
-        }`}
-        aria-hidden="true"
-      >
-        {ok ? "✓" : "!"}
-      </div>
-      <h1 lang="ta" className="font-heading text-2xl tracking-tight">
-        {ta}
-      </h1>
-      <p lang="en" className="mt-2 text-sm italic text-muted-foreground">
-        {en}
-      </p>
-      <div className="mt-8">
-        <Link
-          href={ok ? "/account" : "/"}
-          className={cn(buttonVariants({ size: "lg" }))}
+    <AuthCard titleTa={ok ? "மின்னஞ்சல் உறுதி" : "உறுதி தோல்வி"} titleEn={ok ? "Email verified" : "Verification failed"}>
+      <div className="text-center">
+        <div
+          className="mx-auto mb-5 grid place-items-center size-14"
+          style={{
+            border: `1px solid ${ok ? "var(--peacock)" : "var(--kumkum)"}`,
+            color: ok ? "var(--peacock)" : "var(--kumkum)",
+            fontSize: 24,
+          }}
+          aria-hidden="true"
         >
-          {ok ? "என் கணக்குக்கு செல்லவும் / Go to account" : "முகப்புக்கு / Home"}
-        </Link>
+          {ok ? "✓" : "!"}
+        </div>
+        <p lang="ta" className="ta text-ink mb-2">{ta}</p>
+        <p
+          lang="en"
+          className="text-ink-3"
+          style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 14 }}
+        >
+          {en}
+        </p>
+        <div className="mt-7">
+          <Link
+            href={ok ? "/account" : "/"}
+            className="btn btn-primary"
+            style={{ width: "100%", padding: "13px", fontSize: 14 }}
+          >
+            {ok ? (
+              <>
+                <span data-bi lang="ta">என் கணக்குக்கு செல்</span>
+                <span data-bi lang="en">Go to account</span>
+              </>
+            ) : (
+              <>
+                <span data-bi lang="ta">முகப்புக்குச் செல்</span>
+                <span data-bi lang="en">Go home</span>
+              </>
+            )}
+          </Link>
+        </div>
       </div>
-    </div>
+    </AuthCard>
   );
 }

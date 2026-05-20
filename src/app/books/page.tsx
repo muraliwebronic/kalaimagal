@@ -1,63 +1,111 @@
+import Link from "next/link";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { ContentCard, type ContentCardData } from "@/components/content/ContentCard";
 import { Pagination } from "@/components/content/Pagination";
-import { BiLabel } from "@/components/ui/BiLabel";
 import { listPublicContent, CONTENT_PAGE_SIZE } from "@/lib/content";
 import { getSetting } from "@/lib/settings";
-import { strings } from "@/lib/strings";
+import { prisma } from "@/lib/db";
+import { cn } from "@/lib/utils";
 
 export const metadata = { title: "புத்தகங்கள் — Books" };
+
+interface BooksPageSearchParams {
+  page?: string;
+  category?: string;
+  tier?: "free" | "premium";
+}
 
 export default async function BooksPage({
   searchParams,
 }: {
-  searchParams: Promise<{ page?: string; category?: string }>;
+  searchParams: Promise<BooksPageSearchParams>;
 }) {
   const sp = await searchParams;
   const page = Math.max(1, Number(sp.page) || 1);
   const supportEmail = (await getSetting<string>("site.support_email")) ?? undefined;
 
-  const { items, total, pageCount } = await listPublicContent({
-    type: "PDF",
-    page,
-    pageSize: CONTENT_PAGE_SIZE,
-    categorySlug: sp.category,
-  });
+  const [{ items, total, pageCount }, categories] = await Promise.all([
+    listPublicContent({
+      type: "PDF",
+      page,
+      pageSize: CONTENT_PAGE_SIZE,
+      categorySlug: sp.category,
+    }),
+    prisma.category.findMany({
+      where: { isActive: true },
+      orderBy: { sortOrder: "asc" },
+      select: { slug: true, nameTamil: true, nameEnglish: true },
+      take: 8,
+    }),
+  ]);
 
   return (
     <>
       <Header />
-      <main className="flex-1">
-        <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
-          <header className="mb-10 flex flex-wrap items-end justify-between gap-4">
+      <main className="flex-1 paper-warm">
+        {/* Page header */}
+        <section className="px-6 md:px-14 pt-14 pb-8 border-b border-border-warm">
+          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>
-              <h1 className="font-heading text-3xl md:text-4xl tracking-tight">
-                <BiLabel
-                  ta={strings.nav.books.ta}
-                  en={strings.nav.books.en}
-                  variant="stacked"
-                />
+              <div className="eyebrow mb-2.5">
+                <span data-bi lang="ta">நூலகம் · The Library</span>
+                <span data-bi lang="en">The Library</span>
+              </div>
+              <h1
+                className="ta-display text-burgundy"
+                style={{ fontSize: "clamp(40px, 6vw, 56px)", marginBottom: 8 }}
+              >
+                <span data-bi lang="ta">புத்தகங்கள்</span>
+                <span data-bi lang="en">Books</span>
               </h1>
-              <p className="mt-2 text-sm text-muted-foreground">
-                {total === 0
-                  ? "—"
-                  : `${total} ${total === 1 ? "title" : "titles"} · page ${page} of ${pageCount}`}
+              <p
+                className="text-ink-2"
+                style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 17 }}
+              >
+                {total.toLocaleString()} title{total === 1 ? "" : "s"}
+                <span style={{ color: "var(--gold)", margin: "0 10px" }}>·</span>
+                <span lang="ta" className="ta" style={{ fontStyle: "normal" }}>
+                  பக்கம் {page} / {pageCount}
+                </span>
               </p>
             </div>
-          </header>
 
-          {items.length === 0 ? (
-            <div className="rounded-lg border border-dashed border-border bg-card/50 p-16 text-center">
-              <p lang="ta" className="text-base text-muted-foreground">
-                இன்னும் புத்தகங்கள் வெளியிடப்படவில்லை.
-              </p>
-              <p lang="en" className="mt-1 text-sm italic text-muted-foreground/70">
-                No books published yet.
-              </p>
+            {/* Filters */}
+            <div className="flex flex-wrap items-center gap-2.5">
+              <FilterPill
+                label={{ ta: "அனைத்தும்", en: "All" }}
+                href="/books"
+                active={!sp.category && !sp.tier}
+              />
+              <FilterPill
+                label={{ ta: "இலவசம்", en: "Free" }}
+                href="/books?tier=free"
+                active={sp.tier === "free"}
+              />
+              <FilterPill
+                label={{ ta: "சந்தா", en: "Premium" }}
+                href="/books?tier=premium"
+                active={sp.tier === "premium"}
+              />
+              {categories.slice(0, 3).map((c) => (
+                <FilterPill
+                  key={c.slug}
+                  label={{ ta: c.nameTamil, en: c.nameEnglish ?? c.nameTamil }}
+                  href={`/books?category=${c.slug}`}
+                  active={sp.category === c.slug}
+                />
+              ))}
             </div>
+          </div>
+        </section>
+
+        {/* Grid */}
+        <section className="px-6 md:px-14 py-10 md:py-14">
+          {items.length === 0 ? (
+            <EmptyLibrary />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-8">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-7 gap-y-12">
               {items.map((b) => {
                 const card: ContentCardData = {
                   id: b.id,
@@ -70,6 +118,8 @@ export default async function BooksPage({
                   coverImageUrl: b.coverImageUrl,
                   isPremium: b.isPremium,
                   authorNameTamil: b.contentAuthors[0]?.author.nameTamil,
+                  categoryTamil: b.contentCategories[0]?.category.nameTamil ?? null,
+                  pageCount: b.pageCount,
                   readingTimeMinutes: b.readingTimeMinutes,
                 };
                 return <ContentCard key={b.id} item={card} />;
@@ -81,11 +131,50 @@ export default async function BooksPage({
             basePath="/books"
             page={page}
             pageCount={pageCount}
-            searchParams={{ category: sp.category }}
+            searchParams={{ category: sp.category, tier: sp.tier }}
           />
-        </div>
+        </section>
       </main>
       <Footer supportEmail={supportEmail} />
     </>
+  );
+}
+
+interface FilterPillProps {
+  label: { ta: string; en: string };
+  href: string;
+  active?: boolean;
+}
+
+function FilterPill({ label, href, active }: FilterPillProps) {
+  return (
+    <Link
+      href={href}
+      className={cn(
+        "ta text-[13px] px-4 py-1.5 rounded-full border transition-colors",
+        active
+          ? "bg-burgundy border-burgundy text-paper"
+          : "border-border-warm text-ink-2 hover:border-burgundy hover:text-burgundy",
+      )}
+    >
+      <span data-bi lang="ta">{label.ta}</span>
+      <span data-bi lang="en" style={{ fontFamily: "var(--font-display)" }}>{label.en}</span>
+    </Link>
+  );
+}
+
+function EmptyLibrary() {
+  return (
+    <div className="frame text-center" style={{ padding: 48, maxWidth: 480, margin: "40px auto" }}>
+      <p lang="ta" data-bi className="ta text-ink-2">இன்னும் புத்தகங்கள் வெளியிடப்படவில்லை.</p>
+      <p
+        lang="en"
+        data-bi
+        className="text-ink-3 mt-1"
+        style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}
+      >
+        No books published yet.
+      </p>
+    </div>
   );
 }

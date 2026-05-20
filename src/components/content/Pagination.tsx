@@ -19,35 +19,34 @@ function buildHref(basePath: string, page: number, sp?: Record<string, string | 
   return qs ? `${basePath}?${qs}` : basePath;
 }
 
+/**
+ * Editorial-style paginator: square Prev/Next arrows with warm borders,
+ * burgundy active page, gold-toned ellipsis.
+ */
 export function Pagination({ basePath, page, pageCount, searchParams }: PaginationProps) {
   if (pageCount <= 1) return null;
 
   const prev = page > 1 ? buildHref(basePath, page - 1, searchParams) : null;
   const next = page < pageCount ? buildHref(basePath, page + 1, searchParams) : null;
 
-  // Build a windowed page list: 1 ... [page-1, page, page+1] ... pageCount
-  const windowSize = 1;
+  // Windowed page list: 1, …, [page-1, page, page+1], …, pageCount
   const visible = new Set<number>([1, pageCount, page]);
-  for (let i = 1; i <= windowSize; i++) {
+  for (let i = 1; i <= 1; i++) {
     if (page - i > 0) visible.add(page - i);
     if (page + i <= pageCount) visible.add(page + i);
   }
   const sorted = [...visible].sort((a, b) => a - b);
 
   return (
-    <nav
-      aria-label="Pagination"
-      className="mt-10 flex items-center justify-between gap-4 border-t border-border/60 pt-6"
-    >
-      <PageLink href={prev}>← முந்தைய / Prev</PageLink>
-
-      <ul className="hidden sm:flex items-center gap-1 text-sm">
+    <nav aria-label="Pagination" className="mt-16 flex items-center justify-center gap-3">
+      <ArrowBtn href={prev} dir="prev" />
+      <ul className="hidden sm:flex items-center gap-1">
         {sorted.map((p, idx) => {
           const prevP = sorted[idx - 1];
           const showEllipsis = prevP !== undefined && p - prevP > 1;
           return (
             <li key={p} className="flex items-center gap-1">
-              {showEllipsis && <span className="px-1 text-muted-foreground">…</span>}
+              {showEllipsis && <span className="px-1 text-ink-3">···</span>}
               <PageNumber
                 href={buildHref(basePath, p, searchParams)}
                 active={p === page}
@@ -57,47 +56,49 @@ export function Pagination({ basePath, page, pageCount, searchParams }: Paginati
           );
         })}
       </ul>
-
-      <PageLink href={next}>அடுத்த / Next →</PageLink>
+      <ArrowBtn href={next} dir="next" />
     </nav>
   );
 }
 
-function PageLink({ href, children }: { href: string | null; children: React.ReactNode }) {
+function ArrowBtn({ href, dir }: { href: string | null; dir: "prev" | "next" }) {
+  const cls = "grid place-items-center w-10 h-9 border border-border-warm text-ink-2 hover:border-burgundy hover:text-burgundy transition-colors";
+  const arrow = (
+    <svg
+      width="14"
+      height="14"
+      viewBox="0 0 14 14"
+      style={{ transform: dir === "next" ? "rotate(180deg)" : undefined }}
+    >
+      <path d="M9 2 L4 7 L9 12" fill="none" stroke="currentColor" strokeWidth="1.4" />
+    </svg>
+  );
   if (!href) {
     return (
-      <span className="text-sm text-muted-foreground/60 px-3 py-2">{children}</span>
+      <span className={cn(cls, "opacity-30 pointer-events-none")} aria-hidden="true">
+        {arrow}
+      </span>
     );
   }
   return (
-    <Link
-      href={href}
-      className="text-sm text-primary hover:underline underline-offset-4 px-3 py-2"
-    >
-      {children}
+    <Link href={href} className={cls} aria-label={dir === "prev" ? "Previous page" : "Next page"}>
+      {arrow}
     </Link>
   );
 }
 
-function PageNumber({
-  href,
-  active,
-  label,
-}: {
-  href: string;
-  active: boolean;
-  label: number;
-}) {
+function PageNumber({ href, active, label }: { href: string; active: boolean; label: number }) {
   return (
     <Link
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "inline-flex size-8 items-center justify-center rounded-md text-sm transition-colors",
+        "inline-flex items-center justify-center w-9 h-9 text-sm transition-colors",
         active
-          ? "bg-primary text-primary-foreground"
-          : "hover:bg-accent hover:text-accent-foreground",
+          ? "border border-burgundy bg-burgundy text-paper"
+          : "border border-transparent text-ink-2 hover:border-border-warm",
       )}
+      style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
     >
       {label}
     </Link>

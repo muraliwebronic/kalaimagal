@@ -1,7 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/db";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { SubscribePricingCard } from "@/components/payment/SubscribePricingCard";
 
 export const metadata = { title: "சந்தா — Subscription" };
@@ -30,71 +28,75 @@ export default async function SubscriptionPage() {
     prisma.subscriptionPlan.findUnique({ where: { slug: "monthly" } }),
   ]);
 
-  const isActive =
-    subscription?.status === "ACTIVE" && subscription.expiresAt > new Date();
+  const isActive = subscription?.status === "ACTIVE" && subscription.expiresAt > new Date();
 
   return (
-    <div className="space-y-6">
+    <div className="flex flex-col gap-8">
       {isActive && subscription ? (
-        // Active subscriber — small status card
-        <Card>
-          <CardContent className="space-y-4 p-6">
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <h3 className="font-heading text-lg tracking-tight">
-                  <span data-bi lang="ta">தற்போதைய சந்தா</span>
-                  <span data-bi lang="en">Current plan</span>
-                </h3>
-              </div>
-              <Badge>
-                <span data-bi lang="ta">செயலில்</span>
-                <span data-bi lang="en">Active</span>
-              </Badge>
+        <section className="frame" style={{ padding: 28 }}>
+          <div className="flex items-center justify-between gap-3 mb-3.5">
+            <div className="eyebrow">
+              <span data-bi lang="ta">தற்போதைய சந்தா · Current plan</span>
+              <span data-bi lang="en">Current plan</span>
             </div>
-
-            <div className="text-sm space-y-1">
-              <p>
-                <span data-bi lang="ta" className="font-medium">{subscription.plan.nameTamil}</span>
-                <span data-bi lang="en" className="font-medium">{subscription.plan.nameEnglish}</span>
-              </p>
-              <p className="text-muted-foreground">
-                ₹{subscription.plan.priceInr.toString()} every {subscription.plan.durationDays} days
-              </p>
-              <p className="text-muted-foreground">
-                <span data-bi lang="ta">செல்லுபடியாகும் வரை: {subscription.expiresAt.toLocaleDateString()}</span>
-                <span data-bi lang="en">Active until: {subscription.expiresAt.toLocaleDateString()}</span>
-              </p>
-            </div>
-          </CardContent>
-        </Card>
+            <span className="badge-km badge-km-free">
+              <span data-bi lang="ta">செயலில்</span>
+              <span data-bi lang="en">Active</span>
+            </span>
+          </div>
+          <p lang="ta" className="ta-display text-burgundy" style={{ fontSize: 28 }}>
+            {subscription.plan.nameTamil}
+          </p>
+          <p
+            className="text-ink-3"
+            style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 15, marginTop: 4 }}
+          >
+            {subscription.plan.nameEnglish}
+          </p>
+          <hr className="my-5 border-border-warm" />
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-8 gap-y-3">
+            <KV label={{ ta: "விலை", en: "Price" }}>
+              ₹{subscription.plan.priceInr.toString()} / {subscription.plan.durationDays} days
+            </KV>
+            <KV label={{ ta: "செல்லுபடியாகும் வரை", en: "Active until" }}>
+              {subscription.expiresAt.toLocaleDateString("en-US", {
+                month: "long",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </KV>
+          </div>
+        </section>
       ) : (
-        // No active subscription — show the full pricing card
-        monthlyPlan && fullUser && (
-          <div>
+        monthlyPlan &&
+        fullUser && (
+          <section>
             <div className="mb-6">
-              <h3 className="font-heading text-2xl md:text-3xl tracking-tight">
-                <span data-bi lang="ta">வாசிக்கத் தொடங்குங்கள்</span>
-                <span data-bi lang="en">Start reading today</span>
-              </h3>
-              <p className="mt-1.5 text-sm text-muted-foreground">
+              <div className="eyebrow mb-2">
+                <span data-bi lang="ta">வாசிக்கத் தொடங்குங்கள் · Start reading</span>
+                <span data-bi lang="en">Start reading</span>
+              </div>
+              <h2 className="ta-display text-burgundy" style={{ fontSize: 30 }}>
+                <span data-bi lang="ta">முழு நூலகத்துக்கு அணுகல்</span>
+                <span data-bi lang="en">Unlock the whole library</span>
+              </h2>
+              <p
+                className="text-ink-2 mt-2"
+                style={{ fontFamily: "var(--font-display)", fontSize: 15, lineHeight: 1.6 }}
+              >
                 {subscription?.status === "EXPIRED" ? (
                   <>
                     <span data-bi lang="ta">
-                      உங்கள் சந்தா {subscription.expiresAt.toLocaleDateString()} அன்று காலாவதியானது.
-                      தொடர புதுப்பிக்கவும்.
+                      உங்கள் சந்தா {subscription.expiresAt.toLocaleDateString()} அன்று காலாவதியானது. தொடர புதுப்பிக்கவும்.
                     </span>
                     <span data-bi lang="en">
-                      Your subscription expired on {subscription.expiresAt.toLocaleDateString()}. Renew to continue.
+                      Your subscription expired on {subscription.expiresAt.toLocaleDateString()}. Renew to continue reading.
                     </span>
                   </>
                 ) : (
                   <>
-                    <span data-bi lang="ta">
-                      தமிழ் இலக்கியத்தின் மிகச்சிறந்த உள்ளடக்கங்களை அணுக சந்தா செலுத்தவும்.
-                    </span>
-                    <span data-bi lang="en">
-                      Subscribe to access the best of Tamil literature.
-                    </span>
+                    <span data-bi lang="ta">தமிழ் இலக்கியத்தின் சிறந்த படைப்புகளை அணுக சந்தா செலுத்தவும்.</span>
+                    <span data-bi lang="en">Subscribe to access the best of Tamil literature.</span>
                   </>
                 )}
               </p>
@@ -102,11 +104,7 @@ export default async function SubscriptionPage() {
 
             <div className="max-w-md">
               <SubscribePricingCard
-                user={{
-                  name: fullUser.name,
-                  email: fullUser.email,
-                  phone: fullUser.phone,
-                }}
+                user={{ name: fullUser.name, email: fullUser.email, phone: fullUser.phone }}
                 plan={{
                   slug: monthlyPlan.slug,
                   priceInr: monthlyPlan.priceInr.toString(),
@@ -116,40 +114,79 @@ export default async function SubscriptionPage() {
                 }}
               />
             </div>
-          </div>
+          </section>
         )
       )}
 
-      <Card>
-        <CardContent className="space-y-3 p-6">
-          <h3 className="font-heading text-lg tracking-tight">
-            <span data-bi lang="ta">கட்டண வரலாறு</span>
-            <span data-bi lang="en">Payment history</span>
-          </h3>
-          {payments.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              <span data-bi lang="ta">கட்டண பதிவுகள் இல்லை.</span>
-              <span data-bi lang="en">No payments yet.</span>
-            </p>
-          ) : (
-            <ul className="divide-y divide-border text-sm">
-              {payments.map((p) => (
-                <li key={p.id} className="flex items-center justify-between py-2">
-                  <div>
-                    <p>
-                      {p.plan?.nameEnglish ?? "—"} · {p.status}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {p.createdAt.toLocaleString()}
-                    </p>
-                  </div>
-                  <p className="font-medium tabular-nums">₹{p.netAmount.toString()}</p>
-                </li>
-              ))}
-            </ul>
-          )}
-        </CardContent>
-      </Card>
+      {/* Payment history */}
+      <section className="frame" style={{ padding: 28 }}>
+        <div className="eyebrow mb-4">
+          <span data-bi lang="ta">கட்டண வரலாறு · Payment history</span>
+          <span data-bi lang="en">Payment history</span>
+        </div>
+        {payments.length === 0 ? (
+          <p className="text-ink-2" style={{ fontSize: 14 }}>
+            <span data-bi lang="ta">கட்டண பதிவுகள் இல்லை.</span>
+            <span data-bi lang="en">No payments yet.</span>
+          </p>
+        ) : (
+          <ul className="divide-y divide-border-warm">
+            {payments.map((p) => (
+              <li key={p.id} className="flex items-center justify-between py-3">
+                <div>
+                  <p
+                    className="text-ink"
+                    style={{ fontFamily: "var(--font-display)", fontSize: 14 }}
+                  >
+                    {p.plan?.nameEnglish ?? "—"} ·{" "}
+                    <span
+                      className={
+                        p.status === "PAID"
+                          ? "text-peacock"
+                          : p.status === "REFUNDED"
+                            ? "text-gold"
+                            : "text-kumkum"
+                      }
+                    >
+                      {p.status}
+                    </span>
+                  </p>
+                  <p className="eyebrow eyebrow-sm mt-1">
+                    {p.createdAt.toLocaleDateString("en-US", {
+                      month: "short",
+                      day: "numeric",
+                      year: "numeric",
+                    })}
+                  </p>
+                </div>
+                <p className="text-ink" style={{ fontFamily: "var(--font-display)", fontSize: 17, fontVariantNumeric: "tabular-nums" }}>
+                  ₹{p.netAmount.toString()}
+                </p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
+    </div>
+  );
+}
+
+function KV({
+  label,
+  children,
+}: {
+  label: { ta: string; en: string };
+  children: React.ReactNode;
+}) {
+  return (
+    <div>
+      <div className="eyebrow eyebrow-sm mb-1">
+        <span data-bi lang="ta">{label.ta}</span>
+        <span data-bi lang="en">{label.en}</span>
+      </div>
+      <div className="text-ink" style={{ fontFamily: "var(--font-display)", fontSize: 15 }}>
+        {children}
+      </div>
     </div>
   );
 }

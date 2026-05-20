@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
 import { Noto_Serif_Tamil, Cormorant_Garamond, JetBrains_Mono } from "next/font/google";
 import { getUserLang } from "@/lib/user-lang";
+import { getCurrentUser } from "@/lib/auth";
 import { JsonLd, organizationLd, websiteLd } from "@/lib/jsonld";
 import { Toaster } from "@/components/ui/sonner";
+import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
 import "./globals.css";
 
-// Tamil display + body — Noto Serif Tamil gives the editorial / manuscript
-// feel the redesign calls for (vs Noto Sans Tamil which reads more modern).
 const tamilSerif = Noto_Serif_Tamil({
   variable: "--font-tamil",
   subsets: ["tamil", "latin"],
@@ -14,8 +14,6 @@ const tamilSerif = Noto_Serif_Tamil({
   display: "swap",
 });
 
-// English display — Cormorant Garamond reads as a classical book typeface
-// with italics for editorial captions.
 const cormorant = Cormorant_Garamond({
   variable: "--font-display",
   subsets: ["latin"],
@@ -44,7 +42,7 @@ export default async function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  const userLang = await getUserLang();
+  const [userLang, user] = await Promise.all([getUserLang(), getCurrentUser()]);
   return (
     <html
       lang={userLang}
@@ -54,8 +52,13 @@ export default async function RootLayout({
       <head>
         <JsonLd data={[organizationLd(), websiteLd()]} />
       </head>
-      <body className="min-h-full flex flex-col bg-paper text-ink font-display">
+      {/* Bottom padding on mobile so the fixed bottom nav doesn't cover content */}
+      <body className="min-h-full flex flex-col bg-paper text-ink font-display pb-16 lg:pb-0">
         {children}
+        <MobileBottomNav
+          lang={userLang}
+          user={user ? { name: user.name, email: user.email, role: user.role } : null}
+        />
         <Toaster position="bottom-right" richColors closeButton />
       </body>
     </html>

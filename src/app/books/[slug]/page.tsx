@@ -3,13 +3,12 @@ import { notFound } from "next/navigation";
 import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
-import { Badge } from "@/components/ui/badge";
-import { buttonVariants } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
+import { Cover, pickCoverVariant, emblemFromTitle } from "@/components/brand/Cover";
+import { Divider } from "@/components/brand/Decor";
 import { getPublicContentBySlug } from "@/lib/content";
 import { getSetting } from "@/lib/settings";
-import { strings } from "@/lib/strings";
 import { JsonLd, bookLd, breadcrumbLd } from "@/lib/jsonld";
+import { prisma } from "@/lib/db";
 
 export async function generateMetadata({
   params,
@@ -43,6 +42,27 @@ export default async function BookDetailPage({
   const primaryAuthor = book.contentAuthors[0]?.author;
   const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
+  // Related — same author or category, exclude current
+  const relatedAuthorId = book.contentAuthors[0]?.authorId;
+  const related = await prisma.content.findMany({
+    where: {
+      type: "PDF",
+      status: "PUBLISHED",
+      deletedAt: null,
+      id: { not: book.id },
+      ...(relatedAuthorId
+        ? { contentAuthors: { some: { authorId: relatedAuthorId } } }
+        : {}),
+    },
+    include: {
+      contentAuthors: { include: { author: true }, orderBy: { sortOrder: "asc" }, take: 1 },
+    },
+    orderBy: { publishedAt: "desc" },
+    take: 4,
+  });
+
+  const coverVariant = pickCoverVariant(book.slug);
+
   return (
     <>
       <JsonLd
@@ -75,141 +95,245 @@ export default async function BookDetailPage({
           ]),
         ]}
       />
-      <Header />
-      <main className="flex-1">
-        <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">
-          <nav className="mb-6 text-sm text-muted-foreground" aria-label="Breadcrumb">
-            <Link href="/" className="hover:text-primary">முகப்பு</Link>
-            <span className="mx-2">/</span>
-            <Link href="/books" className="hover:text-primary">{strings.nav.books.ta}</Link>
-          </nav>
 
-          <div className="grid grid-cols-1 gap-10 md:grid-cols-12 md:gap-12">
-            {/* Cover */}
-            <div className="md:col-span-4">
-              <div className="aspect-[3/4] w-full overflow-hidden rounded-md border border-border bg-muted">
-                {book.coverImageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={book.coverImageUrl}
-                    alt=""
-                    className="h-full w-full object-cover"
-                  />
+      <Header />
+      <main className="flex-1 paper-warm">
+        {/* Breadcrumb */}
+        <div
+          className="px-6 md:px-14 pt-5 flex gap-2 items-center"
+          style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)" }}
+        >
+          <Link href="/" className="hover:text-burgundy">Home</Link>
+          <span className="text-gold">›</span>
+          <Link href="/books" className="hover:text-burgundy">Books</Link>
+          <span className="text-gold">›</span>
+          <span className="text-burgundy truncate">{book.titleEnglish ?? book.titleTamil}</span>
+        </div>
+
+        {/* Detail */}
+        <section className="px-6 md:px-14 py-8 md:py-14 grid grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] gap-10 md:gap-16">
+          {/* Cover column */}
+          <div>
+            <Cover
+              titleTamil={book.titleTamil}
+              author={primaryAuthor?.nameTamil}
+              emblem={emblemFromTitle(book.titleTamil)}
+              variant={coverVariant}
+              src={book.coverImageUrl}
+            />
+          </div>
+
+          {/* Metadata column */}
+          <div>
+            <div className="flex flex-wrap items-center gap-2 mb-4">
+              <span className={book.isPremium ? "badge-km badge-km-premium" : "badge-km badge-km-free"}>
+                {book.isPremium ? (
+                  <>
+                    <span data-bi lang="ta">சந்தா</span>
+                    <span data-bi lang="en">Premium</span>
+                  </>
                 ) : (
-                  <div className="flex h-full w-full items-center justify-center p-6">
-                    <span lang="ta" className="font-heading text-2xl text-muted-foreground/40 text-center">
-                      {book.titleTamil}
-                    </span>
-                  </div>
+                  <>
+                    <span data-bi lang="ta">இலவசம்</span>
+                    <span data-bi lang="en">Free</span>
+                  </>
                 )}
-              </div>
+              </span>
+              {book.isFeatured && (
+                <span className="badge-km badge-km-gold">★ Featured</span>
+              )}
+              {book.contentCategories.map((cc) => (
+                <span key={cc.category.slug} className="badge-km badge-km-chip">
+                  <span lang="ta">{cc.category.nameTamil}</span>
+                </span>
+              ))}
             </div>
 
-            {/* Metadata */}
-            <div className="md:col-span-8 space-y-5">
-              <div className="flex flex-wrap items-center gap-2">
-                <Badge variant={book.isPremium ? "default" : "secondary"}>
-                  {book.isPremium ? strings.badge.premium.ta : strings.badge.free.ta}
-                </Badge>
-                {book.isFeatured && (
-                  <Badge variant="secondary">{strings.badge.featured.ta}</Badge>
-                )}
-                {book.contentCategories.slice(0, 3).map((cc) => (
-                  <Badge key={cc.category.slug} variant="secondary" className="font-normal">
-                    <Link href={`/books?category=${cc.category.slug}`}>
-                      {cc.category.nameTamil}
-                    </Link>
-                  </Badge>
-                ))}
-              </div>
+            <h1
+              lang="ta"
+              className="ta-display text-burgundy"
+              style={{ fontSize: "clamp(40px, 6.5vw, 62px)", lineHeight: 1.1, marginBottom: 12 }}
+            >
+              {book.titleTamil}
+            </h1>
+            {book.titleEnglish && (
+              <p
+                lang="en"
+                className="text-ink-2"
+                style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 22, marginBottom: 22 }}
+              >
+                {book.titleEnglish}
+              </p>
+            )}
 
-              <div>
-                <h1
-                  lang="ta"
-                  className="font-heading text-3xl md:text-4xl tracking-tight"
-                >
-                  {book.titleTamil}
-                </h1>
-                {book.titleEnglish && (
-                  <p
-                    lang="en"
-                    className="mt-2 text-lg italic text-muted-foreground font-heading"
-                  >
-                    {book.titleEnglish}
-                  </p>
-                )}
-              </div>
-
+            {/* Author + dates strip */}
+            <div
+              className="flex flex-wrap gap-6 py-4 border-y border-border-warm"
+              style={{ marginBottom: 26 }}
+            >
               {primaryAuthor && (
-                <div className="text-sm text-muted-foreground">
-                  <span lang="ta">{primaryAuthor.nameTamil}</span>
+                <div>
+                  <div className="eyebrow eyebrow-sm">Author</div>
+                  <p lang="ta" className="ta text-ink mt-1" style={{ fontSize: 16 }}>
+                    {primaryAuthor.nameTamil}
+                  </p>
                   {primaryAuthor.nameEnglish && (
-                    <span className="ml-2 italic">/ {primaryAuthor.nameEnglish}</span>
-                  )}
-                  {primaryAuthor.bornYear && (
-                    <span className="ml-2">
-                      ({primaryAuthor.bornYear}
-                      {primaryAuthor.diedYear ? `–${primaryAuthor.diedYear}` : ""})
-                    </span>
+                    <p
+                      className="text-ink-3"
+                      style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 13 }}
+                    >
+                      {primaryAuthor.nameEnglish}
+                    </p>
                   )}
                 </div>
               )}
-
-              {book.description && (
-                <p lang="ta" className="text-base leading-relaxed text-foreground/90 max-w-prose">
-                  {book.description}
-                </p>
+              {book.publicationYear && (
+                <>
+                  <div className="border-l border-border-warm" />
+                  <div>
+                    <div className="eyebrow eyebrow-sm">First Published</div>
+                    <p className="text-ink mt-1" style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
+                      {book.publicationYear}
+                    </p>
+                  </div>
+                </>
               )}
+              {book.publishedAt && (
+                <>
+                  <div className="border-l border-border-warm" />
+                  <div>
+                    <div className="eyebrow eyebrow-sm">Added</div>
+                    <p className="text-ink mt-1" style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
+                      {book.publishedAt.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
 
-              <dl className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                {book.pageCount && (
-                  <Pair label="Pages" value={book.pageCount.toString()} />
-                )}
-                {book.language && (
-                  <Pair label="Language" value={book.language} />
-                )}
-                {book.publicationYear && (
-                  <Pair label="Year" value={book.publicationYear.toString()} />
-                )}
-                {book.publisher && (
-                  <Pair label="Publisher" value={book.publisher} />
-                )}
-                {book.edition && (
-                  <Pair label="Edition" value={book.edition} />
-                )}
-                {book.isbn && (
-                  <Pair label="ISBN" value={book.isbn} />
-                )}
-              </dl>
+            {/* Description */}
+            {book.description && (
+              <p lang="ta" className="ta text-ink mb-4" style={{ fontSize: 16, lineHeight: 1.85 }}>
+                {book.description}
+              </p>
+            )}
 
-              <div className="pt-2 flex flex-wrap gap-3">
-                <Link
-                  href={`/books/${book.slug}/read`}
-                  className={cn(buttonVariants({ size: "lg" }))}
-                >
-                  {strings.cta.startReading.ta} / {strings.cta.startReading.en}
-                </Link>
-                {book.isPremium && (
-                  <p className="text-xs text-muted-foreground self-center">
-                    <span lang="ta">முதல் 2 பக்கங்கள் இலவசம்</span>
-                    <span className="ml-1.5 italic">/ first 2 pages free</span>
-                  </p>
-                )}
+            {/* Key/value grid */}
+            <div className="frame mb-7" style={{ padding: 0 }}>
+              <div className="grid grid-cols-2 sm:grid-cols-3">
+                {([
+                  { k: { ta: "பக்கங்கள்", en: "Pages" }, v: book.pageCount?.toLocaleString() ?? "—" },
+                  { k: { ta: "மொழி", en: "Language" }, v: book.language === "BILINGUAL" ? "Tamil + English" : book.language === "EN" ? "English" : "Tamil · தமிழ்" },
+                  { k: { ta: "வடிவம்", en: "Format" }, v: "PDF · Digital" },
+                  { k: { ta: "ISBN", en: "ISBN" }, v: book.isbn ?? "—" },
+                  { k: { ta: "பதிப்பகம்", en: "Publisher" }, v: book.publisher ?? "—" },
+                  { k: { ta: "ஆண்டு", en: "Year" }, v: book.publicationYear?.toString() ?? "—" },
+                ]).map((kv, i) => (
+                  <div
+                    key={i}
+                    className="px-4 py-3.5"
+                    style={{
+                      borderRight: i % 3 === 2 ? "none" : "1px solid var(--border-soft)",
+                      borderBottom: i < 3 ? "1px solid var(--border-soft)" : "none",
+                    }}
+                  >
+                    <div className="eyebrow eyebrow-sm mb-1">
+                      <span data-bi lang="ta">{kv.k.ta}</span>
+                      <span data-bi lang="en">{kv.k.en}</span>
+                    </div>
+                    <p className="text-ink" style={{ fontFamily: "var(--font-display)", fontSize: 15 }}>
+                      {kv.v}
+                    </p>
+                  </div>
+                ))}
               </div>
             </div>
+
+            {/* Read CTA */}
+            <div className="flex flex-wrap gap-3.5 items-center">
+              <Link
+                href={`/books/${book.slug}/read`}
+                className="btn btn-primary"
+                style={{ padding: "15px 36px", fontSize: 15 }}
+              >
+                <span data-bi lang="ta">வாசிக்கத் தொடங்கு</span>
+                <span data-bi lang="en">Start reading</span>
+                <span style={{ opacity: 0.6 }}>→</span>
+              </Link>
+              {book.isPremium && (
+                <Link
+                  href={`/books/${book.slug}/read`}
+                  className="btn btn-ghost"
+                  style={{ padding: "13px 22px", fontSize: 13 }}
+                >
+                  <span data-bi lang="ta">மாதிரி பார்வையிடு</span>
+                  <span data-bi lang="en">Preview sample</span>
+                </Link>
+              )}
+            </div>
+            {book.isPremium && (
+              <p
+                lang="ta"
+                className="ta text-gold mt-3.5 flex items-center gap-2"
+                style={{ fontSize: 13 }}
+              >
+                <span
+                  style={{
+                    display: "inline-block",
+                    width: 6,
+                    height: 6,
+                    background: "var(--turmeric)",
+                    transform: "rotate(45deg)",
+                  }}
+                />
+                <span data-bi lang="ta">இலவசத்திட்டத்தில் முதல் இரண்டு பக்கங்கள் கிடைக்கும். தொடர்ந்து வாசிக்க ₹99/மாதம்.</span>
+                <span data-bi lang="en">First two pages are free. Continue reading for ₹99/month.</span>
+              </p>
+            )}
           </div>
-        </div>
+        </section>
+
+        <div className="trim mx-6 md:mx-14" />
+
+        {/* Related */}
+        {related.length > 0 && (
+          <section className="px-6 md:px-14 py-12 md:py-16">
+            <Divider
+              label={
+                relatedAuthorId && primaryAuthor
+                  ? `Also by ${primaryAuthor.nameEnglish ?? primaryAuthor.nameTamil}`
+                  : "Related Books"
+              }
+            />
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-7 mt-8">
+              {related.map((b) => (
+                <Link key={b.id} href={`/books/${b.slug}`} className="group block">
+                  <Cover
+                    titleTamil={b.titleTamil}
+                    author={b.contentAuthors[0]?.author.nameTamil ?? null}
+                    emblem={emblemFromTitle(b.titleTamil)}
+                    variant={pickCoverVariant(b.slug)}
+                    src={b.coverImageUrl}
+                  />
+                  <h3
+                    lang="ta"
+                    className="ta-display text-ink mt-3 group-hover:text-burgundy transition-colors"
+                    style={{ fontSize: 16 }}
+                  >
+                    {b.titleTamil}
+                  </h3>
+                  {b.contentAuthors[0] && (
+                    <p lang="ta" className="ta text-ink-3 text-xs mt-1">
+                      {b.contentAuthors[0].author.nameTamil}
+                    </p>
+                  )}
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
       </main>
       <Footer supportEmail={supportEmail} />
     </>
-  );
-}
-
-function Pair({ label, value }: { label: string; value: string }) {
-  return (
-    <div>
-      <dt className="text-xs uppercase tracking-wider text-muted-foreground">{label}</dt>
-      <dd className="mt-0.5">{value}</dd>
-    </div>
   );
 }

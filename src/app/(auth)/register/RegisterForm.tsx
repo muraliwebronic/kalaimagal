@@ -1,12 +1,9 @@
 "use client";
 
 import { useState } from "react";
-import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 const Schema = z.object({
   name: z.string().trim().min(1, "Required").max(150),
@@ -15,10 +12,7 @@ const Schema = z.object({
     .string()
     .trim()
     .optional()
-    .refine(
-      (v) => !v || /^\+?[0-9 \-]{7,20}$/.test(v),
-      "Invalid phone number",
-    ),
+    .refine((v) => !v || /^\+?[0-9 \-]{7,20}$/.test(v), "Invalid phone number"),
   password: z.string().min(8, "Use 8+ characters").max(128),
   acceptedTerms: z.literal(true, { message: "Please accept the terms" }),
   marketingConsent: z.boolean().optional().default(false),
@@ -27,7 +21,6 @@ type FormValues = z.input<typeof Schema>;
 
 export function RegisterForm() {
   const [submitError, setSubmitError] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
@@ -53,114 +46,117 @@ export function RegisterForm() {
   }
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <Field label={{ ta: "பெயர்", en: "Name" }} error={errors.name?.message}>
-        <Input autoFocus autoComplete="name" {...register("name")} />
-      </Field>
+    <form className="flex flex-col gap-3.5" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <div className="field-km">
+        <label>
+          <span data-bi lang="ta">பெயர்</span>
+          <span data-bi lang="en">Full name</span>
+        </label>
+        <input lang="ta" autoFocus autoComplete="name" {...register("name")} />
+        {errors.name?.message && <FieldError msg={errors.name.message} />}
+      </div>
 
-      <Field label={{ ta: "மின்னஞ்சல்", en: "Email" }} error={errors.email?.message}>
-        <Input type="email" autoComplete="email" {...register("email")} />
-      </Field>
+      <div className="field-km">
+        <label>
+          <span data-bi lang="ta">மின்னஞ்சல்</span>
+          <span data-bi lang="en">Email</span>
+        </label>
+        <input type="email" autoComplete="email" {...register("email")} />
+        {errors.email?.message && <FieldError msg={errors.email.message} />}
+      </div>
 
-      <Field
-        label={{ ta: "தொலைபேசி (விருப்பம்)", en: "Phone (optional)" }}
-        error={errors.phone?.message}
-      >
-        <Input
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          placeholder="+91"
-          {...register("phone")}
-        />
-      </Field>
+      <div className="grid grid-cols-[1fr_1.5fr] gap-2.5">
+        <div className="field-km">
+          <label>
+            <span data-bi lang="ta">தொலைபேசி</span>
+            <span data-bi lang="en">Phone</span>
+          </label>
+          <input
+            type="tel"
+            inputMode="tel"
+            autoComplete="tel"
+            placeholder="+91"
+            {...register("phone")}
+          />
+          {errors.phone?.message && <FieldError msg={errors.phone.message} />}
+        </div>
+        <div className="field-km">
+          <label>
+            <span data-bi lang="ta">கடவுச்சொல்</span>
+            <span data-bi lang="en">Password</span>
+          </label>
+          <input type="password" autoComplete="new-password" {...register("password")} />
+          {errors.password?.message && <FieldError msg={errors.password.message} />}
+        </div>
+      </div>
 
-      <Field
-        label={{ ta: "கடவுச்சொல்", en: "Password" }}
-        error={errors.password?.message}
-      >
-        <Input
-          type="password"
-          autoComplete="new-password"
-          {...register("password")}
-        />
-      </Field>
+      <Checkbox {...register("acceptedTerms")}>
+        <span data-bi lang="ta">விதிமுறைகளை ஏற்கிறேன்</span>
+        <span data-bi lang="en">I accept the terms</span>
+      </Checkbox>
+      {errors.acceptedTerms?.message && <FieldError msg={errors.acceptedTerms.message} />}
 
-      <label className="flex items-start gap-2 text-sm">
-        <input
-          type="checkbox"
-          className="mt-1"
-          {...register("acceptedTerms")}
-        />
-        <span>
-          <span lang="ta">
-            <Link href="/legal/terms" className="text-primary hover:underline">
-              விதிமுறைகளை
-            </Link>{" "}
-            ஏற்கிறேன்
-          </span>
-          <span className="ml-1.5 text-xs text-muted-foreground">
-            / I accept the terms
-          </span>
-        </span>
-      </label>
-      {errors.acceptedTerms?.message && (
-        <p className="text-xs text-destructive">{errors.acceptedTerms.message}</p>
-      )}
-
-      <label className="flex items-start gap-2 text-sm">
-        <input
-          type="checkbox"
-          className="mt-1"
-          {...register("marketingConsent")}
-        />
-        <span>
-          <span lang="ta">புதிய வெளியீடுகள் பற்றிய மின்னஞ்சல்கள்</span>
-          <span className="ml-1.5 text-xs text-muted-foreground">
-            / Send me updates about new releases
-          </span>
-        </span>
-      </label>
+      <Checkbox {...register("marketingConsent")}>
+        <span data-bi lang="ta">புதிய வெளியீடுகள் பற்றிய மின்னஞ்சல்கள் வேண்டும்</span>
+        <span data-bi lang="en">Send me updates about new releases</span>
+      </Checkbox>
 
       {submitError && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+        <div
+          className="text-sm mt-1"
+          style={{
+            background: "rgba(155,27,46,.06)",
+            border: "1px solid rgba(155,27,46,.25)",
+            color: "var(--kumkum)",
+            padding: "10px 12px",
+          }}
+        >
           {submitError}
         </div>
       )}
 
-      <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
-        {isSubmitting ? "..." : "பதிவு செய்க / Create account"}
-      </Button>
-
-      <p className="text-center text-sm text-muted-foreground">
-        ஏற்கனவே கணக்கு உள்ளதா? / Already have an account?{" "}
-        <Link href="/login" className="text-primary hover:underline">
-          உள்நுழைய
-        </Link>
-      </p>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="btn btn-primary mt-3"
+        style={{ width: "100%", padding: "13px", fontSize: 14 }}
+      >
+        {isSubmitting ? (
+          <span data-bi lang="ta">...</span>
+        ) : (
+          <>
+            <span data-bi lang="ta">பதிவு செய்</span>
+            <span data-bi lang="en">Create account</span>
+            <span style={{ opacity: 0.6 }}>→</span>
+          </>
+        )}
+      </button>
     </form>
   );
 }
 
-function Field({
-  label,
-  error,
-  children,
-}: {
-  label: { ta: string; en: string };
-  error?: string;
-  children: React.ReactNode;
-}) {
+function FieldError({ msg }: { msg: string }) {
   return (
-    <label className="block space-y-1.5">
-      <span className="text-sm">
-        <span lang="ta">{label.ta}</span>
-        <span className="ml-1.5 text-xs text-muted-foreground" lang="en">
-          / {label.en}
-        </span>
-      </span>
-      {children}
-      {error && <span className="block text-xs text-destructive">{error}</span>}
-    </label>
+    <span className="text-xs" style={{ color: "var(--kumkum)" }}>
+      {msg}
+    </span>
   );
 }
+
+const Checkbox = ({
+  children,
+  ...rest
+}: React.InputHTMLAttributes<HTMLInputElement> & { children: React.ReactNode }) => (
+  <label
+    className="flex items-start gap-2.5 cursor-pointer text-ink-2"
+    style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 12 }}
+  >
+    <input
+      type="checkbox"
+      className="mt-1 size-4 shrink-0"
+      style={{ accentColor: "var(--burgundy)" }}
+      {...rest}
+    />
+    <span className="leading-relaxed text-[13px]">{children}</span>
+  </label>
+);

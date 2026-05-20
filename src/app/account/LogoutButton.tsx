@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
 
 export function LogoutButton({ all = false }: { all?: boolean }) {
   const [pending, setPending] = useState(false);
@@ -13,12 +12,26 @@ export function LogoutButton({ all = false }: { all?: boolean }) {
   }
 
   return (
-    <Button variant="outline" onClick={logout} disabled={pending}>
-      {pending
-        ? "..."
-        : all
-          ? "எல்லா சாதனங்களிலிருந்தும் வெளியேறு / Logout everywhere"
-          : "வெளியேறு / Logout"}
-    </Button>
+    <button
+      type="button"
+      onClick={logout}
+      disabled={pending}
+      className="btn btn-ghost"
+      style={{ padding: "10px 22px", fontSize: 13 }}
+    >
+      {pending ? (
+        "..."
+      ) : all ? (
+        <>
+          <span data-bi lang="ta">எல்லா சாதனங்களிலிருந்தும் வெளியேறு</span>
+          <span data-bi lang="en">Sign out everywhere</span>
+        </>
+      ) : (
+        <>
+          <span data-bi lang="ta">வெளியேறு</span>
+          <span data-bi lang="en">Sign out</span>
+        </>
+      )}
+    </button>
   );
 }

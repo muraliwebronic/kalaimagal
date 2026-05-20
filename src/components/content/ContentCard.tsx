@@ -1,7 +1,5 @@
 import Link from "next/link";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { strings } from "@/lib/strings";
+import { Cover, pickCoverVariant, emblemFromTitle, type CoverVariant } from "@/components/brand/Cover";
 
 export interface ContentCardData {
   id: number;
@@ -14,92 +12,81 @@ export interface ContentCardData {
   coverImageUrl?: string | null;
   isPremium: boolean;
   authorNameTamil?: string | null;
+  /** First category, displayed as the eyebrow above the title. */
+  categoryTamil?: string | null;
+  pageCount?: number | null;
   readingTimeMinutes?: number | null;
 }
 
-export function ContentCard({ item }: { item: ContentCardData }) {
+interface ContentCardProps {
+  item: ContentCardData;
+  /** Override the auto-picked cover variant. */
+  variant?: CoverVariant;
+  /** Hide the category eyebrow. */
+  hideCategory?: boolean;
+}
+
+/**
+ * Editorial book / article card. Cover (with traditional manuscript treatment)
+ * on top, then a metadata block: free/premium badge + category chip,
+ * Tamil title in `ta-display`, English subtitle in italic Cormorant, author
+ * + page count line.
+ */
+export function ContentCard({ item, variant, hideCategory = false }: ContentCardProps) {
   const href = item.type === "PDF" ? `/books/${item.slug}` : `/blogs/${item.slug}`;
-  const blurb = item.excerpt ?? item.description ?? "";
+  const coverVariant = variant ?? pickCoverVariant(item.slug);
 
   return (
     <Link href={href} className="group block">
-      <Card className="h-full overflow-hidden border-border/60 bg-card transition-shadow hover:shadow-md">
+      <article className="flex flex-col">
         {/* Cover */}
-        <div className="relative aspect-[3/4] w-full bg-muted overflow-hidden">
-          {item.coverImageUrl ? (
-            // Use <img> until cover-url comes through next/image-friendly route
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={item.coverImageUrl}
-              alt=""
-              className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-            />
-          ) : (
-            <div className="flex h-full w-full items-center justify-center">
-              <span
-                lang="ta"
-                className="font-heading text-2xl text-muted-foreground/40 px-4 text-center"
-              >
-                {item.titleTamil.slice(0, 24)}
-              </span>
-            </div>
-          )}
-
-          <div className="absolute left-3 top-3 flex flex-col gap-1.5">
-            <Badge variant={item.isPremium ? "default" : "secondary"} className="font-normal">
-              <span data-bi lang="ta">
-                {item.isPremium ? strings.badge.premium.ta : strings.badge.free.ta}
-              </span>
-              <span data-bi lang="en">
-                {item.isPremium ? strings.badge.premium.en : strings.badge.free.en}
-              </span>
-            </Badge>
+        <div className="relative">
+          <Cover
+            titleTamil={item.titleTamil}
+            author={item.authorNameTamil}
+            emblem={emblemFromTitle(item.titleTamil)}
+            variant={coverVariant}
+            src={item.coverImageUrl}
+            className="transition-transform group-hover:translate-y-[-2px]"
+          />
+          <div className="absolute left-3 top-3">
+            <span className={item.isPremium ? "badge-km badge-km-premium" : "badge-km badge-km-free"}>
+              <span data-bi lang="ta">{item.isPremium ? "சந்தா" : "இலவசம்"}</span>
+              <span data-bi lang="en">{item.isPremium ? "Premium" : "Free"}</span>
+            </span>
           </div>
         </div>
 
-        <CardContent className="space-y-2 p-4">
-          {item.titleEnglish ? (
-            <>
-              <h3
-                data-bi
-                lang="ta"
-                className="font-heading text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors"
-              >
-                {item.titleTamil}
-              </h3>
-              <h3
-                data-bi
-                lang="en"
-                className="font-heading text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors"
-              >
-                {item.titleEnglish}
-              </h3>
-            </>
-          ) : (
-            <h3
-              lang="ta"
-              className="font-heading text-lg leading-tight line-clamp-2 group-hover:text-primary transition-colors"
+        {/* Metadata */}
+        <div className="mt-4 px-0.5">
+          {!hideCategory && item.categoryTamil && (
+            <div className="eyebrow eyebrow-sm mb-1.5">{item.categoryTamil}</div>
+          )}
+          <h3
+            lang="ta"
+            className="ta-display text-lg leading-tight text-ink group-hover:text-burgundy transition-colors line-clamp-2"
+          >
+            {item.titleTamil}
+          </h3>
+          {item.titleEnglish && (
+            <p
+              lang="en"
+              className="text-[13px] text-ink-3 mt-1 line-clamp-1"
+              style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}
             >
-              {item.titleTamil}
-            </h3>
+              {item.titleEnglish}
+            </p>
           )}
-          {item.authorNameTamil && (
-            <p lang="ta" className="text-sm text-muted-foreground line-clamp-1">
+          {(item.authorNameTamil || item.pageCount || item.readingTimeMinutes) && (
+            <p lang="ta" className="ta text-xs text-ink-2 mt-2">
               {item.authorNameTamil}
+              {item.authorNameTamil && (item.pageCount || item.readingTimeMinutes) && " · "}
+              {item.pageCount ? <>{item.pageCount} பக்.</> : null}
+              {item.readingTimeMinutes && !item.pageCount ? <>{item.readingTimeMinutes} min</> : null}
             </p>
           )}
-          {blurb && (
-            <p lang="ta" className="text-sm text-muted-foreground/90 line-clamp-2 leading-relaxed">
-              {blurb}
-            </p>
-          )}
-          {item.readingTimeMinutes && (
-            <p className="text-xs text-muted-foreground pt-1">
-              {item.readingTimeMinutes} min read
-            </p>
-          )}
-        </CardContent>
-      </Card>
+        </div>
+      </article>
     </Link>
   );
 }

@@ -1,13 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Input } from "@/components/ui/input";
-import { Button } from "@/components/ui/button";
 
 const Schema = z.object({
   email: z.string().trim().toLowerCase().email("Invalid email"),
@@ -16,9 +13,7 @@ const Schema = z.object({
 type FormValues = z.infer<typeof Schema>;
 
 export function LoginForm({ next }: { next?: string }) {
-  const router = useRouter();
   const [submitError, setSubmitError] = useState<string | null>(null);
-
   const {
     register,
     handleSubmit,
@@ -37,87 +32,77 @@ export function LoginForm({ next }: { next?: string }) {
       setSubmitError(data.error ?? "Login failed");
       return;
     }
-    // Force a full reload so server components pick up the new cookies
     window.location.href = next || "/account";
   }
 
   return (
-    <form className="space-y-5" onSubmit={handleSubmit(onSubmit)} noValidate>
-      <Field
-        label={{ ta: "மின்னஞ்சல்", en: "Email" }}
-        error={errors.email?.message}
-      >
-        <Input
-          type="email"
-          autoComplete="email"
-          autoFocus
-          {...register("email")}
-        />
-      </Field>
+    <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)} noValidate>
+      <div className="field-km">
+        <label>
+          <span data-bi lang="ta">மின்னஞ்சல்</span>
+          <span data-bi lang="en">Email</span>
+        </label>
+        <input type="email" autoComplete="email" autoFocus {...register("email")} />
+        {errors.email && (
+          <span className="text-xs" style={{ color: "var(--kumkum)" }}>
+            {errors.email.message}
+          </span>
+        )}
+      </div>
 
-      <Field
-        label={{ ta: "கடவுச்சொல்", en: "Password" }}
-        error={errors.password?.message}
-        hint={
+      <div className="field-km">
+        <div className="flex justify-between items-baseline">
+          <label>
+            <span data-bi lang="ta">கடவுச்சொல்</span>
+            <span data-bi lang="en">Password</span>
+          </label>
           <Link
             href="/forgot-password"
-            className="text-xs text-primary hover:underline"
+            className="text-xs text-burgundy hover:text-kumkum"
+            style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}
           >
-            மறந்துவிட்டதா? / Forgot?
+            <span data-bi lang="ta">மறந்துவிட்டதா?</span>
+            <span data-bi lang="en">Forgot?</span>
           </Link>
-        }
-      >
-        <Input
-          type="password"
-          autoComplete="current-password"
-          {...register("password")}
-        />
-      </Field>
+        </div>
+        <input type="password" autoComplete="current-password" {...register("password")} />
+        {errors.password && (
+          <span className="text-xs" style={{ color: "var(--kumkum)" }}>
+            {errors.password.message}
+          </span>
+        )}
+      </div>
 
       {submitError && (
-        <div className="rounded-md border border-destructive/30 bg-destructive/5 px-3 py-2 text-sm text-destructive">
+        <div
+          className="text-sm"
+          style={{
+            background: "rgba(155,27,46,.06)",
+            border: "1px solid rgba(155,27,46,.25)",
+            color: "var(--kumkum)",
+            padding: "10px 12px",
+          }}
+        >
           {submitError}
         </div>
       )}
 
-      <Button type="submit" disabled={isSubmitting} className="w-full" size="lg">
-        {isSubmitting ? "..." : "உள்நுழைய / Login"}
-      </Button>
-
-      <p className="text-center text-sm text-muted-foreground">
-        புதிய கணக்கா? / New here?{" "}
-        <Link href="/register" className="text-primary hover:underline">
-          பதிவு செய்க
-        </Link>
-      </p>
+      <button
+        type="submit"
+        disabled={isSubmitting}
+        className="btn btn-primary mt-2"
+        style={{ width: "100%", padding: "13px", fontSize: 14 }}
+      >
+        {isSubmitting ? (
+          <span data-bi lang="ta">...</span>
+        ) : (
+          <>
+            <span data-bi lang="ta">உள்நுழை</span>
+            <span data-bi lang="en">Sign in</span>
+            <span style={{ opacity: 0.6 }}>→</span>
+          </>
+        )}
+      </button>
     </form>
-  );
-}
-
-function Field({
-  label,
-  error,
-  hint,
-  children,
-}: {
-  label: { ta: string; en: string };
-  error?: string;
-  hint?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <label className="block space-y-1.5">
-      <span className="flex items-baseline justify-between">
-        <span className="text-sm">
-          <span lang="ta">{label.ta}</span>
-          <span className="ml-1.5 text-xs text-muted-foreground" lang="en">
-            / {label.en}
-          </span>
-        </span>
-        {hint}
-      </span>
-      {children}
-      {error && <span className="block text-xs text-destructive">{error}</span>}
-    </label>
   );
 }
