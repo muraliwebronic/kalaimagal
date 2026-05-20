@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Noto_Sans_Tamil, Lora, JetBrains_Mono } from "next/font/google";
 import { getUserLang } from "@/lib/user-lang";
+import { JsonLd, organizationLd, websiteLd } from "@/lib/jsonld";
+import { Toaster } from "@/components/ui/sonner";
 import "./globals.css";
 
 const notoTamil = Noto_Sans_Tamil({
@@ -44,7 +46,13 @@ export default async function RootLayout({
       data-lang={userLang}
       className={`${notoTamil.variable} ${lora.variable} ${jetbrains.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <head>
+        <JsonLd data={[organizationLd(), websiteLd()]} />
+      </head>
+      <body className="min-h-full flex flex-col">
+        {children}
+        <Toaster position="bottom-right" richColors closeButton />
+      </body>
     </html>
   );
 }

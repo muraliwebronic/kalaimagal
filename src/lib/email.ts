@@ -135,4 +135,20 @@ export const emailTemplates = {
       html: `<p>வணக்கம் ${name},</p><p>உங்கள் சந்தா செயல்படுகிறது — செல்லுபடியாகும் தேதி: <strong>${date}</strong>.</p><p>கலைமகளில் தமிழ் இலக்கியத்தை அனுபவிக்க தயாராக இருங்கள்.</p><hr/><p>Your Kalaimagal subscription is active until <strong>${date}</strong>. Enjoy.</p>`,
     };
   },
+  expiryReminder3Days(name: string, expiresAt: Date, renewLink: string) {
+    const date = expiresAt.toLocaleDateString();
+    return {
+      subject: "உங்கள் சந்தா 3 நாட்களில் காலாவதியாகும் — Your subscription expires in 3 days",
+      text: `வணக்கம் ${name},\n\nஉங்கள் சந்தா ${date} அன்று காலாவதியாகும் (3 நாட்களில்). இடைவெளி இல்லாமல் தொடர, இப்போதே புதுப்பிக்கவும்:\n\n${renewLink}\n\n— கலைமகள்\n\n---\nHi ${name}, your subscription expires on ${date} (in 3 days). Renew now to keep reading without interruption: ${renewLink}`,
+      html: `<p>வணக்கம் ${name},</p><p>உங்கள் சந்தா <strong>${date}</strong> அன்று காலாவதியாகும் — 3 நாட்களில்.</p><p>இடைவெளி இல்லாமல் தொடர புதுப்பிக்கவும்:</p><p><a href="${renewLink}">${renewLink}</a></p><hr/><p>Hi ${name}, your subscription expires on <strong>${date}</strong> (in 3 days). <a href="${renewLink}">Renew now</a> to keep reading without interruption.</p>`,
+    };
+  },
+  expired(name: string, expiredOn: Date, renewLink: string) {
+    const date = expiredOn.toLocaleDateString();
+    return {
+      subject: "உங்கள் சந்தா காலாவதியானது — Your subscription has expired",
+      text: `வணக்கம் ${name},\n\nஉங்கள் சந்தா ${date} அன்று காலாவதியானது. மீண்டும் வாசிக்க இப்போதே புதுப்பிக்கவும்:\n\n${renewLink}\n\n— கலைமகள்\n\n---\nHi ${name}, your Kalaimagal subscription expired on ${date}. Resubscribe to continue reading: ${renewLink}`,
+      html: `<p>வணக்கம் ${name},</p><p>உங்கள் சந்தா <strong>${date}</strong> அன்று காலாவதியானது.</p><p>மீண்டும் வாசிக்க புதுப்பிக்கவும்:</p><p><a href="${renewLink}">${renewLink}</a></p><hr/><p>Hi ${name}, your Kalaimagal subscription expired on <strong>${date}</strong>. <a href="${renewLink}">Resubscribe</a> to continue reading.</p>`,
+    };
+  },
 };

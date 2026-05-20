@@ -9,6 +9,7 @@ import { cn } from "@/lib/utils";
 import { getPublicContentBySlug } from "@/lib/content";
 import { getSetting } from "@/lib/settings";
 import { strings } from "@/lib/strings";
+import { JsonLd, bookLd, breadcrumbLd } from "@/lib/jsonld";
 
 export async function generateMetadata({
   params,
@@ -40,9 +41,40 @@ export default async function BookDetailPage({
 
   const supportEmail = (await getSetting<string>("site.support_email")) ?? undefined;
   const primaryAuthor = book.contentAuthors[0]?.author;
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   return (
     <>
+      <JsonLd
+        data={[
+          bookLd({
+            slug: book.slug,
+            titleTamil: book.titleTamil,
+            titleEnglish: book.titleEnglish,
+            description: book.description,
+            coverImageUrl: book.coverImageUrl,
+            authors: book.contentAuthors.map((ca) => ({
+              slug: ca.author.slug,
+              nameTamil: ca.author.nameTamil,
+              nameEnglish: ca.author.nameEnglish,
+            })),
+            pageCount: book.pageCount,
+            publicationYear: book.publicationYear,
+            publisher: book.publisher,
+            isbn: book.isbn,
+            language: book.language,
+            isPremium: book.isPremium,
+            publishedAt: book.publishedAt,
+            averageRating: book.averageRating?.toString() ?? null,
+            reviewCount: book.reviewCount,
+          }),
+          breadcrumbLd([
+            { name: "Home", url: base },
+            { name: "Books", url: `${base}/books` },
+            { name: book.titleEnglish ?? book.titleTamil, url: `${base}/books/${book.slug}` },
+          ]),
+        ]}
+      />
       <Header />
       <main className="flex-1">
         <div className="container mx-auto px-4 md:px-6 py-12 md:py-16">

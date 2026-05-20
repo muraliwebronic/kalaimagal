@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge";
 import { getPublicContentBySlug } from "@/lib/content";
 import { getSetting } from "@/lib/settings";
 import { strings } from "@/lib/strings";
+import { JsonLd, articleLd, breadcrumbLd } from "@/lib/jsonld";
 
 export async function generateMetadata({
   params,
@@ -40,9 +41,37 @@ export default async function BlogReaderPage({
 
   const supportEmail = (await getSetting<string>("site.support_email")) ?? undefined;
   const primaryAuthor = post.contentAuthors[0]?.author;
+  const base = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
 
   return (
     <>
+      <JsonLd
+        data={[
+          articleLd({
+            slug: post.slug,
+            titleTamil: post.titleTamil,
+            titleEnglish: post.titleEnglish,
+            description: post.description,
+            excerpt: post.excerpt,
+            coverImageUrl: post.coverImageUrl,
+            ogImageUrl: post.ogImageUrl,
+            authors: post.contentAuthors.map((ca) => ({
+              slug: ca.author.slug,
+              nameTamil: ca.author.nameTamil,
+              nameEnglish: ca.author.nameEnglish,
+            })),
+            language: post.language,
+            publishedAt: post.publishedAt,
+            updatedAt: post.updatedAt,
+            wordCount: post.wordCount,
+          }),
+          breadcrumbLd([
+            { name: "Home", url: base },
+            { name: "Articles", url: `${base}/blogs` },
+            { name: post.titleEnglish ?? post.titleTamil, url: `${base}/blogs/${post.slug}` },
+          ]),
+        ]}
+      />
       <Header />
       <main className="flex-1">
         <article className="container mx-auto px-4 md:px-6 py-12 md:py-16">

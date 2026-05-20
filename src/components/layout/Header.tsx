@@ -3,6 +3,7 @@ import { Menu, Search, User } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { BiLabel } from "@/components/ui/BiLabel";
 import { UserLangToggle } from "@/components/layout/UserLangToggle";
+import { UserMenu } from "@/components/layout/UserMenu";
 import { cn } from "@/lib/utils";
 import {
   Sheet,
@@ -11,9 +12,11 @@ import {
   SheetHeader,
   SheetTitle,
   SheetDescription,
+  SheetClose,
 } from "@/components/ui/sheet";
 import { strings } from "@/lib/strings";
 import { getUserLang } from "@/lib/user-lang";
+import { getCurrentUser } from "@/lib/auth";
 
 const navItems = [
   { href: "/books", label: strings.nav.books },
@@ -23,7 +26,9 @@ const navItems = [
 ] as const;
 
 export async function Header() {
-  const lang = await getUserLang();
+  const [lang, user] = await Promise.all([getUserLang(), getCurrentUser()]);
+  const isAdmin =
+    user?.role === "EDITOR" || user?.role === "ADMIN" || user?.role === "SUPER_ADMIN";
 
   return (
     <header className="sticky top-0 z-40 w-full border-b border-border/60 bg-background/80 backdrop-blur supports-backdrop-filter:bg-background/60">
@@ -71,24 +76,30 @@ export async function Header() {
             <Search className="size-4" />
           </Button>
 
-          <Link
-            href="/login"
-            className={cn(
-              buttonVariants({ variant: "ghost", size: "sm" }),
-              "hidden md:inline-flex",
-            )}
-          >
-            <User className="size-4" />
-            <BiLabel ta={strings.nav.login.ta} en={strings.nav.login.en} variant="inline" />
-          </Link>
+          {user ? (
+            <UserMenu user={{ name: user.name, email: user.email, role: user.role }} />
+          ) : (
+            <>
+              <Link
+                href="/login"
+                className={cn(
+                  buttonVariants({ variant: "ghost", size: "sm" }),
+                  "hidden md:inline-flex",
+                )}
+              >
+                <User className="size-4" />
+                <BiLabel ta={strings.nav.login.ta} en={strings.nav.login.en} variant="inline" />
+              </Link>
 
-          <Link
-            href="/register"
-            className={cn(buttonVariants({ size: "sm" }), "hidden md:inline-flex")}
-          >
-            <span data-bi lang="ta">{strings.nav.register.ta}</span>
-            <span data-bi lang="en">{strings.nav.register.en}</span>
-          </Link>
+              <Link
+                href="/register"
+                className={cn(buttonVariants({ size: "sm" }), "hidden md:inline-flex")}
+              >
+                <span data-bi lang="ta">{strings.nav.register.ta}</span>
+                <span data-bi lang="en">{strings.nav.register.en}</span>
+              </Link>
+            </>
+          )}
 
           {/* Mobile drawer */}
           <Sheet>
@@ -136,19 +147,46 @@ export async function Header() {
                     </span>
                     <UserLangToggle current={lang} />
                   </div>
-                  <Link
-                    href="/login"
-                    className={cn(buttonVariants({ variant: "outline" }), "justify-start")}
-                  >
-                    <User className="size-4" />
-                    <BiLabel ta={strings.nav.login.ta} en={strings.nav.login.en} variant="inline" />
-                  </Link>
-                  <Link
-                    href="/register"
-                    className={cn(buttonVariants(), "justify-start")}
-                  >
-                    <BiLabel ta={strings.nav.register.ta} en={strings.nav.register.en} variant="inline" />
-                  </Link>
+
+                  {user ? (
+                    <>
+                      <Link
+                        href="/account"
+                        className={cn(buttonVariants({ variant: "outline" }), "justify-start")}
+                      >
+                        <User className="size-4" />
+                        <BiLabel
+                          ta={strings.nav.account.ta}
+                          en={strings.nav.account.en}
+                          variant="inline"
+                        />
+                      </Link>
+                      {isAdmin && (
+                        <Link
+                          href="/admin"
+                          className={cn(buttonVariants({ variant: "outline" }), "justify-start")}
+                        >
+                          Admin
+                        </Link>
+                      )}
+                    </>
+                  ) : (
+                    <>
+                      <Link
+                        href="/login"
+                        className={cn(buttonVariants({ variant: "outline" }), "justify-start")}
+                      >
+                        <User className="size-4" />
+                        <BiLabel ta={strings.nav.login.ta} en={strings.nav.login.en} variant="inline" />
+                      </Link>
+                      <Link
+                        href="/register"
+                        className={cn(buttonVariants(), "justify-start")}
+                      >
+                        <BiLabel ta={strings.nav.register.ta} en={strings.nav.register.en} variant="inline" />
+                      </Link>
+                    </>
+                  )}
                 </div>
               </nav>
             </SheetContent>
