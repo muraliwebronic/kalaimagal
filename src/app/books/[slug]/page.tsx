@@ -99,19 +99,22 @@ export default async function BookDetailPage({
       <Header />
       <main className="flex-1 paper-warm">
         {/* Breadcrumb */}
-        <div
-          className="px-6 md:px-14 pt-5 flex gap-2 items-center"
-          style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)" }}
-        >
-          <Link href="/" className="hover:text-burgundy">Home</Link>
-          <span className="text-gold">›</span>
-          <Link href="/books" className="hover:text-burgundy">Books</Link>
-          <span className="text-gold">›</span>
-          <span className="text-burgundy truncate">{book.titleEnglish ?? book.titleTamil}</span>
+        <div className="px-6 md:px-14 pt-5">
+          <div
+            className="max-w-7xl mx-auto flex gap-2 items-center"
+            style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 13, color: "var(--ink-3)" }}
+          >
+            <Link href="/" className="hover:text-burgundy">Home</Link>
+            <span className="text-gold">›</span>
+            <Link href="/books" className="hover:text-burgundy">Books</Link>
+            <span className="text-gold">›</span>
+            <span className="text-burgundy truncate">{book.titleEnglish ?? book.titleTamil}</span>
+          </div>
         </div>
 
         {/* Detail */}
-        <section className="px-6 md:px-14 py-8 md:py-14 grid grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] gap-10 md:gap-16">
+        <section className="px-6 md:px-14 py-8 md:py-14">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] gap-10 md:gap-16">
           {/* Cover column */}
           <div>
             <Cover
@@ -291,6 +294,7 @@ export default async function BookDetailPage({
               </p>
             )}
           </div>
+          </div>
         </section>
 
         <div className="trim mx-6 md:mx-14" />
@@ -298,6 +302,7 @@ export default async function BookDetailPage({
         {/* Related */}
         {related.length > 0 && (
           <section className="px-6 md:px-14 py-12 md:py-16">
+            <div className="max-w-7xl mx-auto">
             <Divider
               label={
                 relatedAuthorId && primaryAuthor
@@ -305,30 +310,38 @@ export default async function BookDetailPage({
                   : "Related Books"
               }
             />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-7 mt-8">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 mt-8">
               {related.map((b) => (
                 <Link key={b.id} href={`/books/${b.slug}`} className="group block">
-                  <Cover
-                    titleTamil={b.titleTamil}
-                    author={b.contentAuthors[0]?.author.nameTamil ?? null}
-                    emblem={emblemFromTitle(b.titleTamil)}
-                    variant={pickCoverVariant(b.slug)}
-                    src={b.coverImageUrl}
-                  />
-                  <h3
-                    lang="ta"
-                    className="ta-display text-ink mt-3 group-hover:text-burgundy transition-colors"
-                    style={{ fontSize: 16 }}
-                  >
-                    {b.titleTamil}
-                  </h3>
-                  {b.contentAuthors[0] && (
-                    <p lang="ta" className="ta text-ink-3 text-xs mt-1">
-                      {b.contentAuthors[0].author.nameTamil}
-                    </p>
-                  )}
+                  <div className="mx-auto flex flex-col" style={{ maxWidth: 240 }}>
+                    <div
+                      className="border border-border-warm p-1.5 transition-transform group-hover:translate-y-[-2px]"
+                      style={{ background: "rgba(241,230,210,0.35)" }}
+                    >
+                      <Cover
+                        titleTamil={b.titleTamil}
+                        author={b.contentAuthors[0]?.author.nameTamil ?? null}
+                        emblem={emblemFromTitle(b.titleTamil)}
+                        variant={pickCoverVariant(b.slug)}
+                        src={b.coverImageUrl}
+                      />
+                    </div>
+                    <h3
+                      lang="ta"
+                      className="ta-display text-ink mt-3 group-hover:text-burgundy transition-colors line-clamp-2"
+                      style={{ fontSize: 15, lineHeight: 1.3 }}
+                    >
+                      {b.titleTamil}
+                    </h3>
+                    {b.contentAuthors[0] && (
+                      <p lang="ta" className="ta text-ink-3 mt-1" style={{ fontSize: 11 }}>
+                        {b.contentAuthors[0].author.nameTamil}
+                      </p>
+                    )}
+                  </div>
                 </Link>
               ))}
+            </div>
             </div>
           </section>
         )}

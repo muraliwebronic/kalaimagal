@@ -170,6 +170,7 @@ export default async function HomePage() {
 
         {/* FEATURED BOOKS */}
         <section className="px-6 md:px-14 py-16 md:py-20">
+          <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between gap-4 mb-8">
             <div>
               <div className="eyebrow mb-2">
@@ -203,12 +204,13 @@ export default async function HomePage() {
               en="No books published yet."
             />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-7 md:gap-7">
+            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-5 gap-y-10">
               {featuredBooks.map((b) => (
                 <ContentCard key={b.id} item={toCardData(b)} />
               ))}
             </div>
           )}
+          </div>
         </section>
 
         {/* PEACOCK SUBSCRIBE BAND */}
@@ -257,35 +259,54 @@ export default async function HomePage() {
                 இலவசத் திட்டத்தில் ஒவ்வொரு பிரீமியம் புத்தகத்தின் முதல் இரண்டு பக்கங்கள் கிடைக்கும். சந்தாதாரர்களுக்கு வரம்பற்ற வாசிப்பு.
               </p>
 
-              <div
-                className="mx-auto max-w-md grid grid-cols-2 border border-border-warm bg-paper text-left"
-              >
-                <div className="px-6 py-5">
+              <div className="mx-auto max-w-2xl grid grid-cols-1 sm:grid-cols-2 gap-6 text-left mt-8">
+                {/* Free Card */}
+                <div className="flex flex-col border border-border-warm bg-paper rounded-xl p-8 shadow-sm transition-transform duration-300 hover:-translate-y-1">
                   <div className="eyebrow">
                     <span data-bi lang="ta">இலவசம் · Free</span>
-                    <span data-bi lang="en">Free</span>
+                    <span data-bi lang="en">Free Plan</span>
                   </div>
-                  <div className="display text-ink mt-2" style={{ fontSize: 30 }}>₹0</div>
-                  <ul className="mt-3 flex flex-col gap-1.5">
-                    <li className="ta text-ink-2" style={{ fontSize: 13 }}>· அனைத்து கட்டுரைகள்</li>
-                    <li className="ta text-ink-2" style={{ fontSize: 13 }}>· முதல் 2 பக்கங்கள்</li>
+                  <div className="display text-ink mt-3" style={{ fontSize: 36 }}>₹0</div>
+                  <p className="ta text-ink-3 mt-2 text-sm font-medium">அனைவருக்கும் இலவசம்</p>
+                  <hr className="my-5 border-border-warm" />
+                  <ul className="flex flex-col gap-3.5">
+                    <li className="ta text-ink-2 flex items-start gap-2.5" style={{ fontSize: 14 }}>
+                      <span className="text-gold mt-0.5">✓</span> அனைத்து கட்டுரைகளும் வாசிக்கலாம்
+                    </li>
+                    <li className="ta text-ink-2 flex items-start gap-2.5" style={{ fontSize: 14 }}>
+                      <span className="text-gold mt-0.5">✓</span> பிரீமியம் நூல்களின் முதல் 2 பக்கங்கள்
+                    </li>
                   </ul>
                 </div>
-                <div
-                  className="px-6 py-5"
-                  style={{ background: "var(--burgundy)", color: "#FFE8B8" }}
+
+                {/* Premium Card */}
+                <div 
+                  className="flex flex-col border rounded-xl p-8 shadow-md transition-transform duration-300 hover:-translate-y-1 relative overflow-hidden"
+                  style={{ background: "var(--burgundy)", color: "#FFE8B8", borderColor: "var(--burgundy)" }}
                 >
-                  <div className="eyebrow" style={{ color: "#D9B97C" }}>
+                  <div className="absolute top-[-20px] right-[-20px] p-4 opacity-10 pointer-events-none">
+                    <PeacockEye size={120} />
+                  </div>
+                  <div className="eyebrow relative z-10" style={{ color: "#D9B97C" }}>
                     <span data-bi lang="ta">சந்தா · Premium</span>
-                    <span data-bi lang="en">Premium</span>
+                    <span data-bi lang="en">Premium Plan</span>
                   </div>
-                  <div className="display mt-2" style={{ fontSize: 30, color: "#FFE8B8" }}>
+                  <div className="display mt-3 relative z-10" style={{ fontSize: 36, color: "#FFE8B8" }}>
                     ₹{price}
-                    <span style={{ fontSize: 13, fontStyle: "italic", opacity: 0.7 }}> /மாதம்</span>
+                    <span style={{ fontSize: 14, fontStyle: "italic", opacity: 0.7 }}> /மாதம்</span>
                   </div>
-                  <ul className="mt-3 flex flex-col gap-1.5">
-                    <li className="ta" style={{ fontSize: 13 }}>· வரம்பற்ற நூல்கள்</li>
-                    <li className="ta" style={{ fontSize: 13 }}>· விரைவில் வரும் புதியவை</li>
+                  <p className="ta mt-2 text-sm relative z-10 font-medium" style={{ color: "#D9B97C" }}>முழு நூலகமும் உங்கள் கைகளில்</p>
+                  <hr className="my-5 relative z-10" style={{ borderColor: "rgba(217, 185, 124, 0.25)" }} />
+                  <ul className="flex flex-col gap-3.5 relative z-10">
+                    <li className="ta flex items-start gap-2.5" style={{ fontSize: 14 }}>
+                      <span style={{ color: "#D9B97C" }} className="mt-0.5">✓</span> வரம்பற்ற நூல்கள் வாசிப்பு
+                    </li>
+                    <li className="ta flex items-start gap-2.5" style={{ fontSize: 14 }}>
+                      <span style={{ color: "#D9B97C" }} className="mt-0.5">✓</span> விரைவில் வரும் புதிய நூல்கள்
+                    </li>
+                    <li className="ta flex items-start gap-2.5" style={{ fontSize: 14 }}>
+                      <span style={{ color: "#D9B97C" }} className="mt-0.5">✓</span> எவ்வித விளம்பரங்களும் இல்லை
+                    </li>
                   </ul>
                 </div>
               </div>
@@ -313,6 +334,7 @@ export default async function HomePage() {
 
         {/* RECENT ARTICLES */}
         <section className="px-6 md:px-14 py-16 md:py-20">
+          <div className="max-w-7xl mx-auto">
           <div className="flex items-end justify-between gap-4 mb-8">
             <div>
               <div className="eyebrow mb-2">
@@ -385,6 +407,7 @@ export default async function HomePage() {
               ))}
             </div>
           )}
+          </div>
         </section>
       </main>
 

@@ -37,19 +37,22 @@ export function ContentCard({ item, variant, hideCategory = false }: ContentCard
   const coverVariant = variant ?? pickCoverVariant(item.slug);
 
   return (
-    <Link href={href} className="group block">
-      <article className="flex flex-col">
-        {/* Cover */}
-        <div className="relative">
+    <Link href={href} className="group block h-full">
+      <article className="flex flex-col h-full w-full">
+        {/* Cover — wrapped in a thin warm frame + sandalwood inner pad so the
+            image / typographic placeholder reads as a proper book cover */}
+        <div
+          className="relative border border-border-warm p-2 rounded-md transition-all duration-300 group-hover:shadow-md group-hover:-translate-y-1"
+          style={{ background: "rgba(241,230,210,0.5)" }}
+        >
           <Cover
             titleTamil={item.titleTamil}
             author={item.authorNameTamil}
             emblem={emblemFromTitle(item.titleTamil)}
             variant={coverVariant}
             src={item.coverImageUrl}
-            className="transition-transform group-hover:translate-y-[-2px]"
           />
-          <div className="absolute left-3 top-3">
+          <div className="absolute left-2.5 top-2.5">
             <span className={item.isPremium ? "badge-km badge-km-premium" : "badge-km badge-km-free"}>
               <span data-bi lang="ta">{item.isPremium ? "சந்தா" : "இலவசம்"}</span>
               <span data-bi lang="en">{item.isPremium ? "Premium" : "Free"}</span>
@@ -58,27 +61,27 @@ export function ContentCard({ item, variant, hideCategory = false }: ContentCard
         </div>
 
         {/* Metadata */}
-        <div className="mt-4 px-0.5">
+        <div className="mt-3 px-0.5">
           {!hideCategory && item.categoryTamil && (
-            <div className="eyebrow eyebrow-sm mb-1.5">{item.categoryTamil}</div>
+            <div className="eyebrow eyebrow-sm mb-1">{item.categoryTamil}</div>
           )}
           <h3
             lang="ta"
-            className="ta-display text-lg leading-tight text-ink group-hover:text-burgundy transition-colors line-clamp-2"
+            className="ta-display text-lg leading-snug text-ink group-hover:text-burgundy transition-colors line-clamp-2 mt-1"
           >
             {item.titleTamil}
           </h3>
           {item.titleEnglish && (
             <p
               lang="en"
-              className="text-[13px] text-ink-3 mt-1 line-clamp-1"
+              className="text-sm text-ink-3 mt-1 line-clamp-1"
               style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}
             >
               {item.titleEnglish}
             </p>
           )}
           {(item.authorNameTamil || item.pageCount || item.readingTimeMinutes) && (
-            <p lang="ta" className="ta text-xs text-ink-2 mt-2">
+            <p lang="ta" className="ta text-[11px] text-ink-2 mt-1.5">
               {item.authorNameTamil}
               {item.authorNameTamil && (item.pageCount || item.readingTimeMinutes) && " · "}
               {item.pageCount ? <>{item.pageCount} பக்.</> : null}

@@ -29,31 +29,34 @@ export default async function BlogsPage({
       <main className="flex-1 paper-warm">
         {/* Page header */}
         <section className="px-6 md:px-14 pt-14 pb-8 border-b border-border-warm">
-          <div className="eyebrow mb-2.5">
-            <span data-bi lang="ta">இதழ் · The Journal</span>
-            <span data-bi lang="en">The Journal</span>
+          <div className="max-w-7xl mx-auto">
+            <div className="eyebrow mb-2.5">
+              <span data-bi lang="ta">இதழ் · The Journal</span>
+              <span data-bi lang="en">The Journal</span>
+            </div>
+            <h1
+              className="ta-display text-burgundy"
+              style={{ fontSize: "clamp(40px, 6vw, 56px)", marginBottom: 8 }}
+            >
+              <span data-bi lang="ta">கட்டுரைகள்</span>
+              <span data-bi lang="en">Articles</span>
+            </h1>
+            <p
+              className="text-ink-2"
+              style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 17 }}
+            >
+              {total.toLocaleString()} article{total === 1 ? "" : "s"}
+              <span style={{ color: "var(--gold)", margin: "0 10px" }}>·</span>
+              <span lang="ta" className="ta" style={{ fontStyle: "normal" }}>
+                பக்கம் {page} / {pageCount}
+              </span>
+            </p>
           </div>
-          <h1
-            className="ta-display text-burgundy"
-            style={{ fontSize: "clamp(40px, 6vw, 56px)", marginBottom: 8 }}
-          >
-            <span data-bi lang="ta">கட்டுரைகள்</span>
-            <span data-bi lang="en">Articles</span>
-          </h1>
-          <p
-            className="text-ink-2"
-            style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 17 }}
-          >
-            {total.toLocaleString()} article{total === 1 ? "" : "s"}
-            <span style={{ color: "var(--gold)", margin: "0 10px" }}>·</span>
-            <span lang="ta" className="ta" style={{ fontStyle: "normal" }}>
-              பக்கம் {page} / {pageCount}
-            </span>
-          </p>
         </section>
 
         {/* Grid */}
         <section className="px-6 md:px-14 py-10 md:py-14">
+          <div className="max-w-7xl mx-auto">
           {items.length === 0 ? (
             <div className="frame text-center" style={{ padding: 48, maxWidth: 480, margin: "40px auto" }}>
               <p lang="ta" data-bi className="ta text-ink-2">இன்னும் கட்டுரைகள் வெளியிடப்படவில்லை.</p>
@@ -122,6 +125,7 @@ export default async function BlogsPage({
             pageCount={pageCount}
             searchParams={{ category: sp.category }}
           />
+          </div>
         </section>
       </main>
       <Footer supportEmail={supportEmail} />

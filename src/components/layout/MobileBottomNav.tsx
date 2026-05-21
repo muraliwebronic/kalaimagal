@@ -40,6 +40,16 @@ export function MobileBottomNav({ lang, user }: MobileBottomNavProps) {
   if (pathname.match(/^\/books\/[^/]+\/read/)) return null;
   // Admin has its own UI
   if (pathname.startsWith("/admin")) return null;
+  // Auth pages have their own clean layout
+  if (
+    pathname.startsWith("/login") ||
+    pathname.startsWith("/register") ||
+    pathname.startsWith("/forgot") ||
+    pathname.startsWith("/reset") ||
+    pathname.startsWith("/verify")
+  ) {
+    return null;
+  }
 
   const tabs = [
     { href: "/", icon: Home, ta: "முகப்பு", en: "Home", match: (p: string) => p === "/" },

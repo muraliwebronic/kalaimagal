@@ -5,6 +5,8 @@ import { getCurrentUser } from "@/lib/auth";
 import { JsonLd, organizationLd, websiteLd } from "@/lib/jsonld";
 import { Toaster } from "@/components/ui/sonner";
 import { MobileBottomNav } from "@/components/layout/MobileBottomNav";
+import { MobileTopBar } from "@/components/layout/MobileTopBar";
+import { MobileTopBarWrapper } from "@/components/layout/MobileTopBarWrapper";
 import "./globals.css";
 
 const tamilSerif = Noto_Serif_Tamil({
@@ -54,6 +56,9 @@ export default async function RootLayout({
       </head>
       {/* Bottom padding on mobile so the fixed bottom nav doesn't cover content */}
       <body className="min-h-full flex flex-col bg-paper text-ink font-display pb-16 lg:pb-0">
+        <MobileTopBarWrapper>
+          <MobileTopBar />
+        </MobileTopBarWrapper>
         {children}
         <MobileBottomNav
           lang={userLang}

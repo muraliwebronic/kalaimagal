@@ -21,7 +21,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
     <>
       <Header />
       <main className="flex-1 paper-warm">
-        <div className="px-6 md:px-14 py-10 md:py-14">
+        <div className="max-w-7xl mx-auto px-6 md:px-14 py-10 md:py-14">
           {/* Page header */}
           <div className="mb-8 md:mb-10">
             <div className="eyebrow mb-2.5">

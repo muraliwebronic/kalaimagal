@@ -28,14 +28,15 @@ const navItems: NavItem[] = [
 export async function Header() {
   const [lang, user] = await Promise.all([getUserLang(), getCurrentUser()]);
 
+  // Hidden on mobile — MobileBottomNav owns mobile nav. lg+ shows the full bar.
   return (
     <header
-      className="relative border-b border-border-warm"
+      className="relative border-b border-border-warm hidden lg:block"
       style={{ background: "rgba(250,247,242,0.92)", backdropFilter: "blur(8px)" }}
     >
       <div className="trim-thin" />
 
-      <div className="container mx-auto flex items-center justify-between gap-4 px-4 md:px-10 py-3.5">
+      <div className="max-w-7xl mx-auto flex items-center justify-between gap-4 px-10 py-3.5">
         {/* Brand */}
         <Link href="/" className="flex items-center gap-3 md:gap-3.5 shrink-0" aria-label="Kalaimagal">
           <Logo size={38} />

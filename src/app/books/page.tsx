@@ -46,7 +46,7 @@ export default async function BooksPage({
       <main className="flex-1 paper-warm">
         {/* Page header */}
         <section className="px-6 md:px-14 pt-14 pb-8 border-b border-border-warm">
-          <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
+          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
             <div>
               <div className="eyebrow mb-2.5">
                 <span data-bi lang="ta">நூலகம் · The Library</span>
@@ -102,10 +102,11 @@ export default async function BooksPage({
 
         {/* Grid */}
         <section className="px-6 md:px-14 py-10 md:py-14">
+          <div className="max-w-7xl mx-auto">
           {items.length === 0 ? (
             <EmptyLibrary />
           ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-7 gap-y-12">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-10">
               {items.map((b) => {
                 const card: ContentCardData = {
                   id: b.id,
@@ -133,6 +134,7 @@ export default async function BooksPage({
             pageCount={pageCount}
             searchParams={{ category: sp.category, tier: sp.tier }}
           />
+          </div>
         </section>
       </main>
       <Footer supportEmail={supportEmail} />

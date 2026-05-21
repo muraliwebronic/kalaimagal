@@ -17,12 +17,12 @@ interface AuthCardProps {
 export function AuthCard({ titleTa, titleEn, subtitleTa, subtitleEn, children, footer }: AuthCardProps) {
   return (
     <>
-      <div className="frame" style={{ padding: "36px 32px", background: "var(--paper)" }}>
+      <div className="frame px-5 py-7 sm:px-8 sm:py-9" style={{ background: "var(--paper)" }}>
         <div className="text-center mb-7">
           <h1
             lang="ta"
             className="ta-display text-burgundy"
-            style={{ fontSize: 34, lineHeight: 1.2, marginBottom: 6 }}
+            style={{ fontSize: "clamp(26px, 7vw, 34px)", lineHeight: 1.2, marginBottom: 6 }}
           >
             <span data-bi lang="ta">{titleTa}</span>
             <span data-bi lang="en">{titleEn}</span>

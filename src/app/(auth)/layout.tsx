@@ -13,16 +13,16 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   const lang = await getUserLang();
   return (
     <div className="paper-warm min-h-screen flex flex-col">
-      <header className="px-6 md:px-14 py-4 border-b border-border-warm flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-3" aria-label="Kalaimagal">
-          <Logo size={36} />
+      <header className="px-4 sm:px-6 md:px-14 py-3 sm:py-4 border-b border-border-warm flex items-center justify-between">
+        <Link href="/" className="flex items-center gap-2.5 sm:gap-3" aria-label="Kalaimagal">
+          <Logo size={32} />
           <Wordmark size="sm" />
         </Link>
-        <div className="flex items-center gap-3.5">
+        <div className="flex items-center gap-3 sm:gap-3.5">
           <UserLangToggle current={lang} />
           <Link
             href="/"
-            className="text-sm text-ink-2 hover:text-burgundy"
+            className="hidden sm:inline-flex text-sm text-ink-2 hover:text-burgundy"
             style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}
           >
             <span data-bi lang="ta">← தளத்திற்குத் திரும்பு</span>
