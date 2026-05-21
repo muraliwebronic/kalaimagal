@@ -14,7 +14,7 @@ import {
 import { adminStrings, t } from "@/lib/admin/strings";
 import type { AdminLang } from "@/lib/admin/lang";
 
-const items = [
+export const adminNavItems = [
   { href: "/admin", icon: LayoutDashboard, label: adminStrings.nav.dashboard, exact: true },
   { href: "/admin/content", icon: FileText, label: adminStrings.nav.content },
   { href: "/admin/subscribers", icon: Users, label: adminStrings.nav.subscribers },
@@ -41,7 +41,7 @@ export function AdminSidebar({ lang }: { lang: AdminLang }) {
 
       <nav className="flex-1 px-2 py-3" aria-label="Admin">
         <ul className="space-y-0.5">
-          {items.map(({ href, icon: Icon, label, exact }) => {
+          {adminNavItems.map(({ href, icon: Icon, label, exact }) => {
             const active = exact ? pathname === href : pathname.startsWith(href);
             return (
               <li key={href}>

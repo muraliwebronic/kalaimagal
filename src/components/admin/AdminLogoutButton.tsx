@@ -22,7 +22,7 @@ export function AdminLogoutButton({ label }: { label: string }) {
       title={label}
     >
       <LogOut className="size-3.5" />
-      {label}
+      <span className="hidden md:inline">{label}</span>
     </button>
   );
 }
