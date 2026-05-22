@@ -302,3 +302,4 @@ prisma/
 public/uploads/                 dev-only PDF + WebP cache (.gitignored)
                                 ⚠ MUST swap to Cloudflare R2 before prod launch
 ```
+this is the kalaigamagal project 
