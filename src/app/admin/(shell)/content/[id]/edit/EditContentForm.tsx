@@ -24,6 +24,7 @@ interface Initial {
   readingTimeMinutes: number | null;
   metaTitle: string | null;
   metaDescription: string | null;
+  renderState: "PENDING" | "RENDERING" | "READY" | "FAILED";
 }
 
 interface FormValues {
@@ -236,9 +237,18 @@ export function EditContentForm({
           <Button
             type="button"
             variant="outline"
-            disabled={busy !== null}
+            // PDFs can't be published until the cron has rasterised every
+            // page to the base cache — otherwise readers would hit the
+            // synchronous-fallback path on every uncached page, blowing
+            // the cost win.
+            disabled={busy !== null || (initial.type === "PDF" && initial.renderState !== "READY")}
             size="lg"
             onClick={() => save(getValues(), "PUBLISHED")}
+            title={
+              initial.type === "PDF" && initial.renderState !== "READY"
+                ? `Pages still rendering — publish unlocks at READY (currently ${initial.renderState})`
+                : undefined
+            }
           >
             {busy === "publish"
               ? t(adminStrings.common.loading, lang)

@@ -131,5 +131,10 @@ export function storage(): StorageDriver {
 
 export const storageKeys = {
   pdf: (docId: string) => `pdfs/${docId}.pdf`,
+  /** Legacy single-layer cache key (kept so existing files still resolve). */
   page: (docId: string, page: number) => `cache/${docId}/page_${page}.webp`,
+  /** Unwatermarked base raster — pre-rendered once at upload, never served raw. */
+  baseRaster: (docId: string, page: number) => `cache/${docId}/base/page_${page}.webp`,
+  /** Watermarked PREVIEW output for non-subscribers — shared across users. */
+  previewPage: (docId: string, page: number) => `cache/${docId}/preview/page_${page}.webp`,
 };

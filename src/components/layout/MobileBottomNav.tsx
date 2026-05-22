@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { usePathname } from "next/navigation";
 import { Home, BookOpen, FileText, User, Menu, X, LogIn, ExternalLink } from "lucide-react";
-import { Logo, Wordmark } from "@/components/brand/Logo";
+import { Logo } from "@/components/brand/Logo";
 import { UserLangToggle } from "@/components/layout/UserLangToggle";
 import type { UserLang } from "@/lib/user-lang";
 import { cn } from "@/lib/utils";
@@ -150,9 +150,8 @@ export function MobileBottomNav({ lang, user }: MobileBottomNavProps) {
           </div>
 
           <div className="flex items-center justify-between px-5 pb-3">
-            <div className="flex items-center gap-3">
-              <Logo size={32} />
-              <Wordmark size="sm" />
+            <div className="flex items-center">
+              <Logo size={36} />
             </div>
             <button
               type="button"

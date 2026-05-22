@@ -25,12 +25,15 @@ export default async function BooksPage({
   const page = Math.max(1, Number(sp.page) || 1);
   const supportEmail = (await getSetting<string>("site.support_email")) ?? undefined;
 
+  const isPremium = sp.tier === "premium" ? true : sp.tier === "free" ? false : undefined;
+
   const [{ items, total, pageCount }, categories] = await Promise.all([
     listPublicContent({
       type: "PDF",
       page,
       pageSize: CONTENT_PAGE_SIZE,
       categorySlug: sp.category,
+      isPremium,
     }),
     prisma.category.findMany({
       where: { isActive: true },

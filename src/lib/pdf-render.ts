@@ -136,11 +136,21 @@ function makeCanvasFactory() {
   };
 }
 
-export async function renderPdfPageToWebp(opts: RenderPageOptions): Promise<Buffer> {
-  const { pdfBuffer, page, scale = 2.0, watermarkText, webpQuality = 78 } = opts;
+/**
+ * Render a single PDF page to an **unwatermarked** WebP. This is the
+ * expensive half of the pipeline — pdfjs parse + napi-canvas rasterize at
+ * 144 DPI + WebP encode. The output is a "base raster" suitable for
+ * private cache storage; never serve it directly to the client.
+ *
+ * Use {@link applyWatermarkToWebp} to overlay the per-request watermark on
+ * top of the buffer this returns.
+ */
+export async function renderPdfPageToBaseWebp(
+  opts: Omit<RenderPageOptions, "watermarkText">,
+): Promise<Buffer> {
+  const { pdfBuffer, page, scale = 2.0, webpQuality = 78 } = opts;
 
   const pdfjs = await loadPdfjs();
-
   const canvasFactory = makeCanvasFactory();
 
   const loadingTask = pdfjs.getDocument({
@@ -162,7 +172,6 @@ export async function renderPdfPageToWebp(opts: RenderPageOptions): Promise<Buff
     const canvas = createCanvas(Math.ceil(viewport.width), Math.ceil(viewport.height));
     const ctx = canvas.getContext("2d");
     applyContextLeniency(ctx);
-    // Fill white — PDFs without a defined background render transparent
     ctx.fillStyle = "#ffffff";
     ctx.fillRect(0, 0, canvas.width, canvas.height);
 
@@ -174,22 +183,43 @@ export async function renderPdfPageToWebp(opts: RenderPageOptions): Promise<Buff
     } as Parameters<typeof pdfPage.render>[0]).promise;
 
     const pngBuffer = canvas.toBuffer("image/png");
-
-    // Compose watermark + encode WebP via sharp
-    let pipeline = sharp(pngBuffer);
-    if (watermarkText) {
-      const watermarkSvg = buildWatermarkSvg(
-        watermarkText,
-        Math.ceil(viewport.width),
-        Math.ceil(viewport.height),
-      );
-      pipeline = pipeline.composite([{ input: Buffer.from(watermarkSvg), blend: "over" }]);
-    }
-    const webp = await pipeline.webp({ quality: webpQuality }).toBuffer();
-    return webp;
+    return await sharp(pngBuffer).webp({ quality: webpQuality }).toBuffer();
   } finally {
     await doc.destroy().catch(() => {});
   }
+}
+
+/**
+ * Composite a diagonal watermark onto an already-rendered WebP and
+ * re-encode. Cheap: ~50–100 ms vs ~1000–2000 ms for a full pdf→raster
+ * pass. Reads (width, height) from the input's WebP metadata.
+ */
+export async function applyWatermarkToWebp(
+  webpBuffer: Buffer,
+  watermarkText: string,
+  webpQuality = 78,
+): Promise<Buffer> {
+  const meta = await sharp(webpBuffer).metadata();
+  const w = meta.width ?? 0;
+  const h = meta.height ?? 0;
+  if (!w || !h) throw new Error("Could not read WebP dimensions for watermarking");
+  const watermarkSvg = buildWatermarkSvg(watermarkText, w, h);
+  return await sharp(webpBuffer)
+    .composite([{ input: Buffer.from(watermarkSvg), blend: "over" }])
+    .webp({ quality: webpQuality })
+    .toBuffer();
+}
+
+/**
+ * Compatibility wrapper — render and optionally watermark in one pass.
+ * Prefer the split pair above so the heavy raster step can be cached
+ * separately from the per-user watermark.
+ */
+export async function renderPdfPageToWebp(opts: RenderPageOptions): Promise<Buffer> {
+  const { watermarkText, webpQuality = 78 } = opts;
+  const base = await renderPdfPageToBaseWebp(opts);
+  if (!watermarkText) return base;
+  return applyWatermarkToWebp(base, watermarkText, webpQuality);
 }
 
 /** Get the page count of a PDF without rendering. */
@@ -209,26 +239,34 @@ export async function getPdfPageCount(pdfBuffer: Buffer): Promise<number> {
 }
 
 /**
- * Build an SVG that lays out diagonal repeated watermark text across the
- * whole page. Returned as a UTF-8 string ready for sharp.composite().
+ * Build an SVG that places **three light watermarks** on the page —
+ * top-right corner, near-center (very faint), bottom-left corner. Kept
+ * subtle so subscriber reading isn't disrupted, but still forensically
+ * useful: the text carries the subscriber's name + email so any leaked
+ * page is traceable back to a single account.
+ *
+ * For the "PREVIEW" badge (non-subscriber), the same SVG is reused but
+ * the marks read "PREVIEW" instead.
  */
 function buildWatermarkSvg(text: string, w: number, h: number): string {
   const safeText = text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  // Density: roughly 5 columns x 8 rows for typical book aspect — tune later
-  const cols = 5;
-  const rows = 8;
-  const fontSize = Math.round(Math.min(w, h) / 18);
-  const tiles: string[] = [];
-  for (let row = 0; row < rows; row++) {
-    for (let col = 0; col < cols; col++) {
-      const cx = ((col + 0.5) * w) / cols;
-      const cy = ((row + 0.5) * h) / rows;
-      tiles.push(
-        `<text x="${cx}" y="${cy}" text-anchor="middle" dominant-baseline="middle" ` +
-          `transform="rotate(-30 ${cx} ${cy})" font-family="serif" font-size="${fontSize}" ` +
-          `fill="#000000" fill-opacity="0.10" letter-spacing="3">${safeText}</text>`,
-      );
-    }
-  }
+  const isPreview = text === "PREVIEW";
+  // Smaller font than the old 40-tile grid: ~1.5% of min dimension
+  const fontSize = Math.max(14, Math.round(Math.min(w, h) / 42));
+  // Corner marks at ~6% inset, center mark dead-middle but with very low
+  // opacity so it sits behind text rather than across it.
+  const inset = Math.round(Math.min(w, h) * 0.055);
+  const mark = (x: number, y: number, opacity: number, anchor: string, rotate: number) =>
+    `<text x="${x}" y="${y}" text-anchor="${anchor}" dominant-baseline="middle" ` +
+    `transform="rotate(${rotate} ${x} ${y})" font-family="serif" font-style="italic" ` +
+    `font-size="${fontSize}" fill="#000000" fill-opacity="${opacity}" letter-spacing="1.5">${safeText}</text>`;
+  const tiles = [
+    // Top-right margin
+    mark(w - inset, inset + fontSize, isPreview ? 0.14 : 0.09, "end", 0),
+    // Centre — very faint, slightly rotated; sits behind text without blocking
+    mark(w / 2, h / 2, isPreview ? 0.07 : 0.04, "middle", -28),
+    // Bottom-left margin
+    mark(inset, h - inset, isPreview ? 0.14 : 0.09, "start", 0),
+  ];
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${w}" height="${h}">${tiles.join("")}</svg>`;
 }

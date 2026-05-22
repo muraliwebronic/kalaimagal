@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo, Wordmark } from "@/components/brand/Logo";
+import { Logo } from "@/components/brand/Logo";
 import { UserLangToggle } from "@/components/layout/UserLangToggle";
 import { getUserLang } from "@/lib/user-lang";
 
@@ -18,9 +18,8 @@ export async function MobileTopBar() {
     <div className="lg:hidden border-b border-border-warm" style={{ background: "rgba(250,247,242,0.95)", backdropFilter: "blur(6px)" }}>
       <div className="trim-thin" />
       <div className="flex items-center justify-between gap-3 px-4 py-2.5">
-        <Link href="/" className="flex items-center gap-2.5" aria-label="Kalaimagal">
-          <Logo size={32} />
-          <Wordmark size="sm" />
+        <Link href="/" className="flex items-center" aria-label="Kalaimagal">
+          <Logo size={36} priority />
         </Link>
         <UserLangToggle current={lang} variant="compact" />
       </div>

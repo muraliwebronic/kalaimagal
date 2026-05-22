@@ -39,6 +39,13 @@ enum ContentStatus {
   ARCHIVED
 }
 
+enum RenderState {
+  PENDING   // queued, nothing rendered yet beyond the cover
+  RENDERING // cron is actively chewing through pages for this content
+  READY     // every page rasterized to base cache; safe to publish
+  FAILED    // a render call threw; admin can retry
+}
+
 enum ContentAuthorRole {
   AUTHOR
   TRANSLATOR
@@ -361,6 +368,12 @@ model Content {
   isPremium           Boolean       @default(false)
   isFeatured          Boolean       @default(false)
   status              ContentStatus @default(DRAFT)
+  // Base-raster pre-render state. PDFs start PENDING after upload; a cron
+  // walks the queue and flips them to READY once every page is rasterised
+  // to cache/{id}/base/page_{N}.webp. BLOG rows are always READY.
+  renderState         RenderState   @default(READY)
+  renderProgress      Int           @default(0)
+  renderError         String?       @db.Text
   publishedAt         DateTime?
   scheduledAt         DateTime?
   sortOrder           Int           @default(0)
@@ -396,6 +409,7 @@ model Content {
   @@index([publishedAt])
   @@index([isFeatured])
   @@index([deletedAt])
+  @@index([renderState])
   @@index([status, type, publishedAt])
 }
 

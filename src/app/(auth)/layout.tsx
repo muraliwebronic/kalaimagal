@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo, Wordmark } from "@/components/brand/Logo";
+import { Logo } from "@/components/brand/Logo";
 import { Gopuram, Thoranam } from "@/components/brand/Decor";
 import { UserLangToggle } from "@/components/layout/UserLangToggle";
 import { getUserLang } from "@/lib/user-lang";
@@ -14,9 +14,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   return (
     <div className="paper-warm min-h-screen flex flex-col">
       <header className="px-4 sm:px-6 md:px-14 py-3 sm:py-4 border-b border-border-warm flex items-center justify-between">
-        <Link href="/" className="flex items-center gap-2.5 sm:gap-3" aria-label="Kalaimagal">
-          <Logo size={32} />
-          <Wordmark size="sm" />
+        <Link href="/" className="flex items-center" aria-label="Kalaimagal">
+          <Logo size={36} priority />
         </Link>
         <div className="flex items-center gap-3 sm:gap-3.5">
           <UserLangToggle current={lang} />

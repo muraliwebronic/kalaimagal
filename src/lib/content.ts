@@ -11,6 +11,7 @@ export interface ListContentParams {
   pageSize?: number;
   categorySlug?: string;
   tagSlug?: string;
+  isPremium?: boolean;
 }
 
 /**
@@ -23,11 +24,13 @@ export async function listPublicContent({
   pageSize = CONTENT_PAGE_SIZE,
   categorySlug,
   tagSlug,
+  isPremium,
 }: ListContentParams) {
   const where = {
     type,
     status: "PUBLISHED" as const,
     deletedAt: null,
+    ...(isPremium !== undefined ? { isPremium } : {}),
     ...(categorySlug
       ? { contentCategories: { some: { category: { slug: categorySlug } } } }
       : {}),

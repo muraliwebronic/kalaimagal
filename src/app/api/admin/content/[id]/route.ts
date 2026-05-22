@@ -75,6 +75,23 @@ export async function PATCH(
   const before = await prisma.content.findUnique({ where: { id: contentId } });
   if (!before) return NextResponse.json({ error: "Not found" }, { status: 404 });
 
+  // Guard: can't publish a PDF until the render-queue cron has finished
+  // pre-rasterising every page. Without this, the first reader of an
+  // uncached page would trigger an in-request render on the convert API
+  // and lose the cost-reduction win.
+  if (
+    parsed.data.status === "PUBLISHED" &&
+    before.type === "PDF" &&
+    before.renderState !== "READY"
+  ) {
+    return NextResponse.json(
+      {
+        error: `Cannot publish — pages still rendering (${before.renderProgress}/${before.pageCount ?? "?"}, state=${before.renderState})`,
+      },
+      { status: 409 },
+    );
+  }
+
   // Sanitize bodyText if it's being updated
   const cleanBody =
     parsed.data.bodyText !== undefined && parsed.data.bodyText !== null

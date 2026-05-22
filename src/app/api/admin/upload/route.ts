@@ -4,7 +4,7 @@ import { Prisma } from "@/generated/prisma/client";
 import { prisma } from "@/lib/db";
 import { requireAdmin } from "@/lib/admin/auth";
 import { storage, storageKeys } from "@/lib/storage";
-import { renderPdfPageToWebp, getPdfPageCount } from "@/lib/pdf-render";
+import { renderPdfPageToBaseWebp, getPdfPageCount } from "@/lib/pdf-render";
 import { getRequestIpAndUa } from "@/lib/auth";
 
 export const runtime = "nodejs";
@@ -101,6 +101,12 @@ export async function POST(req: Request) {
         isPremium,
         isFeatured,
         status: "DRAFT",
+        // Bulk page rasterisation is handled by the render-queue cron — the
+        // book stays PENDING until every page is in cache/{id}/base/.
+        // renderProgress starts at 1 because we pre-render page 1 below as
+        // the cover. The cron handles 2..N.
+        renderState: "PENDING",
+        renderProgress: 0,
         language: "TA",
         createdById: user.id,
       },
@@ -115,25 +121,30 @@ export async function POST(req: Request) {
     throw e;
   }
 
-  // Generate the cover image (page 1) and cache it. coverImageUrl points at
-  // the convert API so the cached WebP serves it.
+  // Pre-render page 1 immediately as the cover base — gives admin an
+  // instant preview and lets the convert API serve covers before the
+  // cron has touched the rest of the book. Pages 2..N are queued.
   let coverImageUrl: string | null = null;
   try {
-    const webp = await renderPdfPageToWebp({
+    const webp = await renderPdfPageToBaseWebp({
       pdfBuffer: buffer,
       page: 1,
       scale: 2.0,
-      watermarkText: undefined, // no watermark on the cover
     });
-    await storage().put(storageKeys.page(String(created.id), 1), webp, "image/webp");
+    await storage().put(
+      storageKeys.baseRaster(String(created.id), 1),
+      webp,
+      "image/webp",
+    );
     coverImageUrl = `/api/convert?doc_id=${created.id}&page=1`;
     await prisma.content.update({
       where: { id: created.id },
-      data: { coverImageUrl },
+      data: { coverImageUrl, renderProgress: 1 },
     });
   } catch (e) {
     console.error(`cover generation failed for content ${created.id}:`, e);
-    // Don't fail the whole upload — admin can re-trigger via edit page later
+    // Don't fail the whole upload — the cron will pick the book up and
+    // render page 1 itself. Admin can also retry from the edit page.
   }
 
   const { ip, userAgent } = await getRequestIpAndUa();

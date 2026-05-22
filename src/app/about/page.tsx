@@ -225,7 +225,7 @@ function FeatureCard({
     <article className="frame" style={{ padding: 28 }}>
       <div
         className="grid place-items-center size-10 mb-4"
-        style={{ background: "var(--burgundy)", color: "#FFE8B8" }}
+        style={{ background: "var(--burgundy)", color: "var(--logo-yellow)" }}
       >
         <Icon className="size-5" />
       </div>

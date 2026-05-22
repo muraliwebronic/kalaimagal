@@ -1,10 +1,68 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ChevronLeft, ExternalLink } from "lucide-react";
+import { ChevronLeft, ExternalLink, Loader2, AlertCircle, Clock } from "lucide-react";
 import { prisma } from "@/lib/db";
 import { getAdminLang } from "@/lib/admin/lang";
 import { adminStrings, t } from "@/lib/admin/strings";
 import { EditContentForm } from "./EditContentForm";
+
+function RenderStatusBanner({
+  state,
+  progress,
+  total,
+  error,
+}: {
+  state: "PENDING" | "RENDERING" | "READY" | "FAILED";
+  progress: number;
+  total: number;
+  error: string | null;
+}) {
+  const pct = total > 0 ? Math.round((progress / total) * 100) : 0;
+  if (state === "FAILED") {
+    return (
+      <div className="mb-6 rounded-md border border-destructive/40 bg-destructive/5 p-4">
+        <div className="flex items-start gap-2.5">
+          <AlertCircle className="size-4 mt-0.5 text-destructive" />
+          <div className="flex-1 text-sm">
+            <p className="font-medium text-destructive">Render failed</p>
+            <p className="mt-1 text-xs text-muted-foreground">
+              {error ?? "Unknown error"}
+            </p>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Reset to retry via the API: <code className="font-mono">POST /api/admin/content/{"{id}"}/retry-render</code>{" "}
+              (or update <code className="font-mono">renderState=PENDING</code> in Studio).
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+  return (
+    <div className="mb-6 rounded-md border border-amber-200 bg-amber-50 dark:border-amber-900 dark:bg-amber-950/30 p-4">
+      <div className="flex items-start gap-2.5">
+        {state === "RENDERING" ? (
+          <Loader2 className="size-4 mt-0.5 text-amber-600 animate-spin" />
+        ) : (
+          <Clock className="size-4 mt-0.5 text-amber-600" />
+        )}
+        <div className="flex-1">
+          <p className="text-sm font-medium text-amber-900 dark:text-amber-100">
+            Pre-rendering pages ({progress} of {total})
+          </p>
+          <p className="mt-1 text-xs text-amber-800/80 dark:text-amber-200/70">
+            The book stays in DRAFT until every page is in the base cache. Publish will be locked until rendering is READY.
+          </p>
+          <div className="mt-2.5 h-1.5 w-full overflow-hidden rounded-full bg-amber-200/60 dark:bg-amber-900/40">
+            <div
+              className="h-full bg-amber-500 transition-all"
+              style={{ width: `${pct}%` }}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export const metadata = { title: "Edit content · Admin" };
 
@@ -64,6 +122,15 @@ export default async function EditContentPage({
         )}
       </div>
 
+      {content.type === "PDF" && content.renderState !== "READY" && (
+        <RenderStatusBanner
+          state={content.renderState}
+          progress={content.renderProgress}
+          total={content.pageCount ?? 0}
+          error={content.renderError}
+        />
+      )}
+
       <EditContentForm
         lang={lang}
         initial={{
@@ -82,6 +149,7 @@ export default async function EditContentPage({
           readingTimeMinutes: content.readingTimeMinutes,
           metaTitle: content.metaTitle,
           metaDescription: content.metaDescription,
+          renderState: content.renderState,
         }}
       />
     </div>

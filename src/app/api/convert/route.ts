@@ -3,7 +3,10 @@ import { cookies } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/db";
 import { storage, storageKeys } from "@/lib/storage";
-import { renderPdfPageToWebp } from "@/lib/pdf-render";
+import {
+  renderPdfPageToBaseWebp,
+  applyWatermarkToWebp,
+} from "@/lib/pdf-render";
 import { COOKIE_ACCESS, verifyAccessToken } from "@/lib/auth";
 import { checkLimit, getClientIp } from "@/lib/rate-limit";
 
@@ -111,6 +114,8 @@ export async function GET(req: Request) {
   // --- 6. Tier check: premium + no paid access + page > free limit → 403
   // Paid access = active Subscription row OR admin/editor staff role
   // (staff bypass the paywall — they're internal users, not customers).
+  // Watermark text is the subscriber's name + email so leaks are traceable.
+  // Phone is deliberately excluded — email already identifies the account.
   let hasPaidAccess = false;
   let watermarkText = "PREVIEW";
   if (userId) {
@@ -123,30 +128,28 @@ export async function GET(req: Request) {
           }),
       prisma.user.findUnique({
         where: { id: userId },
-        select: { email: true, phone: true },
+        select: { name: true, email: true },
       }),
     ]);
     if (isStaff || activeSub) {
       hasPaidAccess = true;
-      // Staff get an attributable watermark too — if a leak happens, the
-      // watermark identifies which staff account viewed the page.
-      watermarkText = user?.phone ?? user?.email ?? "Kalaimagal";
+      const name = user?.name?.trim();
+      const email = user?.email?.trim();
+      watermarkText =
+        name && email ? `${name} · ${email}` : email ?? name ?? "Kalaimagal";
     }
   }
   if (content.isPremium && !hasPaidAccess && page > FREE_PAGE_LIMIT) {
     return new NextResponse("Subscription required", { status: 403 });
   }
 
-  // --- 7. Cache hit path -------------------------------------------------
-  // Cache is keyed by content + page. Two different watermarks (PREVIEW vs
-  // user-specific) mean we can ONLY cache the public PREVIEW watermark
-  // for non-subscribers; subscriber pages must be rendered per-request
-  // (their watermark embeds their email/phone).
-  const cacheable = !hasPaidAccess;
-  const cacheKey = storageKeys.page(String(content.id), page);
-
-  if (cacheable) {
-    const cached = await storage().get(cacheKey);
+  // --- 7. Layered cache -------------------------------------------------
+  // Layer B (output): shared PREVIEW renders are cached for non-subscribers.
+  // Subscriber output is never persisted — the watermark carries PII.
+  const docKey = String(content.id);
+  const previewKey = storageKeys.previewPage(docKey, page);
+  if (!hasPaidAccess) {
+    const cached = await storage().get(previewKey);
     if (cached) {
       return new NextResponse(new Uint8Array(cached), {
         status: 200,
@@ -155,27 +158,33 @@ export async function GET(req: Request) {
     }
   }
 
-  // --- 8. Render -------------------------------------------------------
-  // content.filePath is the storage key (e.g., 'pdfs/{uuid}.pdf'),
-  // written by the admin upload handler in Phase 3.3.
-  const pdfBuffer = await storage().get(content.filePath);
-  if (!pdfBuffer) {
-    console.error(`PDF missing at key ${content.filePath} for content ${content.id}`);
-    return new NextResponse("PDF asset missing", { status: 500 });
+  // Layer A (base): pre-rendered by the upload cron. If present, skip the
+  // heavy pdfjs/canvas rasterise step entirely — just composite the watermark.
+  const baseKey = storageKeys.baseRaster(docKey, page);
+  let baseWebp = await storage().get(baseKey);
+
+  if (!baseWebp) {
+    // Cron hasn't reached this page yet (or it's a legacy book uploaded
+    // before the queue existed). Render on-demand and persist for next time.
+    const pdfBuffer = await storage().get(content.filePath);
+    if (!pdfBuffer) {
+      console.error(`PDF missing at key ${content.filePath} for content ${content.id}`);
+      return new NextResponse("PDF asset missing", { status: 500 });
+    }
+    baseWebp = await renderPdfPageToBaseWebp({ pdfBuffer, page, scale: 2.0 });
+    // Fire-and-forget persist; failure to cache shouldn't block response.
+    storage()
+      .put(baseKey, baseWebp, "image/webp")
+      .catch((e) => console.error("base cache put failed:", e));
   }
 
-  const webp = await renderPdfPageToWebp({
-    pdfBuffer,
-    page,
-    scale: 2.0,
-    watermarkText,
-  });
+  // Apply the per-tier watermark (cheap: ~50–100ms vs ~1500ms full render).
+  const webp = await applyWatermarkToWebp(baseWebp, watermarkText);
 
-  if (cacheable) {
-    // Fire-and-forget; failure to cache shouldn't block response
+  if (!hasPaidAccess) {
     storage()
-      .put(cacheKey, webp, "image/webp")
-      .catch((e) => console.error("cache put failed:", e));
+      .put(previewKey, webp, "image/webp")
+      .catch((e) => console.error("preview cache put failed:", e));
   }
 
   return new NextResponse(new Uint8Array(webp), {
@@ -187,10 +196,15 @@ export async function GET(req: Request) {
 function cacheHeaders(perRequest = false): HeadersInit {
   return {
     "Content-Type": "image/webp",
-    // Per-subscriber renders carry user PII in the watermark — must not be
-    // shared by intermediate caches. Public preview pages can be CDN-cached.
+    // Subscriber pages: `private` — never let a shared/CDN cache hold them
+    // (the watermark carries the subscriber's name+email). Browser disk
+    // cache *is* allowed, so flipping back to an earlier page costs zero
+    // server compute. Watermark already makes any extracted bytes
+    // forensically traceable to the account, so disk-cached bytes don't
+    // weaken the security model.
+    // Public preview pages: long CDN cache, content-addressed.
     "Cache-Control": perRequest
-      ? "private, max-age=0, no-store"
+      ? "private, max-age=86400, must-revalidate"
       : "public, max-age=31536000, immutable",
   };
 }

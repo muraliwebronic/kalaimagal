@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo, Wordmark } from "@/components/brand/Logo";
+import { Logo } from "@/components/brand/Logo";
 
 const linkGroups = [
   {
@@ -37,13 +37,13 @@ const linkGroups = [
 export function Footer({ supportEmail }: { supportEmail?: string }) {
   const year = new Date().getFullYear();
   return (
-    <footer className="mt-auto bg-ink text-sandalwood">
-      {/* gradient bar — burgundy → turmeric → gold → burgundy */}
+    <footer className="mt-auto bg-burgundy text-sandalwood">
+      {/* Tricolor gradient bar mirroring the logo: peacock → yellow → gold → burgundy */}
       <div
         className="h-1"
         style={{
           background:
-            "linear-gradient(to right, var(--burgundy), var(--turmeric), var(--gold), var(--burgundy))",
+            "linear-gradient(to right, var(--peacock), var(--logo-yellow), var(--gold), var(--burgundy))",
         }}
       />
 
@@ -51,26 +51,25 @@ export function Footer({ supportEmail }: { supportEmail?: string }) {
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 md:gap-12">
           {/* Brand block — 5/12 */}
           <div className="md:col-span-5">
-            <div className="flex items-center gap-3.5 mb-4">
-              <Logo size={40} />
-              <Wordmark size="md" color="var(--sandalwood)" />
+            <div className="mb-5 inline-block ">
+              <Logo size={44} />
             </div>
-            <p lang="ta" className="ta text-sm leading-relaxed text-gold-pale max-w-sm">
+            <p lang="ta" className="ta text-sm leading-relaxed text-sandalwood/90 max-w-sm">
               தமிழ் இலக்கியத்தின் வாசிப்பு வீடு — செவ்விலக்கியம் முதல் சமகால எழுத்து வரை.
             </p>
             <p
               lang="en"
-              className="text-sm text-gold mt-1 max-w-sm"
+              className="text-sm text-sandalwood-2 mt-2 max-w-sm opacity-90"
               style={{ fontFamily: "var(--font-display)", fontStyle: "italic" }}
             >
               A reading home for Tamil literature — from the classical to the contemporary.
             </p>
             {supportEmail && (
               <p
-                className="mt-5 text-xs text-ink-3"
-                style={{ fontFamily: "var(--font-mono)", color: "#8A7A60" }}
+                className="mt-6 text-xs"
+                style={{ fontFamily: "var(--font-mono)", color: "rgba(244, 233, 203, 0.6)" }}
               >
-                <a href={`mailto:${supportEmail}`} className="hover:text-gold-pale">
+                <a href={`mailto:${supportEmail}`} className="hover:text-logo-yellow transition-colors">
                   {supportEmail}
                 </a>
               </p>
@@ -80,14 +79,17 @@ export function Footer({ supportEmail }: { supportEmail?: string }) {
           {/* Link groups — 3 × 7/12 */}
           {linkGroups.map((group) => (
             <div key={group.headingEn} className="md:col-span-2">
-              <p className="eyebrow mb-3.5" style={{ color: "var(--turmeric)" }}>
+              <p className="eyebrow mb-4" style={{ color: "var(--logo-yellow)" }}>
                 <span data-bi lang="ta">{group.headingTa}</span>
                 <span data-bi lang="en">{group.headingEn}</span>
               </p>
-              <ul className="flex flex-col gap-2">
+              <ul className="flex flex-col gap-2.5">
                 {group.items.map((item, idx) => (
-                  <li key={`${group.headingEn}-${idx}`} className="text-sm" style={{ color: "var(--gold-pale)" }}>
-                    <Link href={item.href} className="hover:text-paper transition-colors">
+                  <li key={`${group.headingEn}-${idx}`} className="text-sm">
+                    <Link
+                      href={item.href}
+                      className="text-sandalwood-2/85 hover:text-logo-yellow transition-colors duration-200"
+                    >
                       <span data-bi lang="ta" className="ta">{item.ta}</span>
                       <span data-bi lang="en" style={{ fontFamily: "var(--font-display)" }}>
                         {item.en}
@@ -105,14 +107,14 @@ export function Footer({ supportEmail }: { supportEmail?: string }) {
       </div>
 
       <div
-        className="border-t px-6 md:px-10 py-4 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
-        style={{ borderColor: "rgba(216,184,124,.15)" }}
+        className="border-t px-6 md:px-10 py-5 flex flex-col md:flex-row md:items-center md:justify-between gap-2"
+        style={{ borderColor: "rgba(244, 233, 203, 0.15)" }}
       >
         <span
           style={{
             fontFamily: "var(--font-mono)",
             fontSize: 11,
-            color: "#8A7A60",
+            color: "rgba(244, 233, 203, 0.55)",
             letterSpacing: "0.04em",
           }}
         >
@@ -123,7 +125,7 @@ export function Footer({ supportEmail }: { supportEmail?: string }) {
             fontFamily: "var(--font-display)",
             fontStyle: "italic",
             fontSize: 12,
-            color: "#8A7A60",
+            color: "rgba(244, 233, 203, 0.55)",
           }}
         >
           Made with care in Chennai · <span lang="ta">சென்னை</span>
