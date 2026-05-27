@@ -1,7 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  reactCompiler: true,
+  reactCompiler: false,
   allowedDevOrigins: ["192.168.0.12"],
 
   // Native-binding + dynamic-require packages can't be bundled by Turbopack.
