@@ -12,6 +12,8 @@ interface VideoCardProps {
   description: string;
   /** When true, renders a tall featured layout (16:9 + larger title). */
   featured?: boolean;
+  /** When true, applies a dark theme to text for cinematic sections. */
+  darkTheme?: boolean;
 }
 
 /**
@@ -20,7 +22,7 @@ interface VideoCardProps {
  * the user clicks Play; clicking swaps in the iframe with autoplay=1. This
  * keeps the homepage's video grid feather-light vs. five live iframes.
  */
-export function VideoCard({ id, title, description, featured }: VideoCardProps) {
+export function VideoCard({ id, title, description, featured, darkTheme = false }: VideoCardProps) {
   const [active, setActive] = useState(false);
   const thumb = `https://i.ytimg.com/vi/${id}/${featured ? "maxresdefault" : "hqdefault"}.jpg`;
 
@@ -70,14 +72,14 @@ export function VideoCard({ id, title, description, featured }: VideoCardProps) 
 
       <h3
         lang="ta"
-        className="ta-display text-ink mt-4 group-hover:text-burgundy transition-colors line-clamp-2"
+        className={`ta-display mt-4 transition-colors px-2 line-clamp-2 ${darkTheme ? "text-paper group-hover:text-turmeric" : "text-ink group-hover:text-burgundy"}`}
         style={{ fontSize: featured ? 22 : 16, lineHeight: 1.32 }}
       >
         {title}
       </h3>
       <p
         lang="en"
-        className="text-ink-2 mt-1.5"
+        className={`mt-1.5 px-2 ${darkTheme ? "text-paper/70" : "text-ink-2"}`}
         style={{
           fontFamily: "var(--font-display)",
           fontStyle: "italic",

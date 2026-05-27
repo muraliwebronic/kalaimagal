@@ -1,4 +1,5 @@
 import { VideoCard } from "./VideoCard";
+import { PeacockEye, Thoranam } from "@/components/brand/Decor";
 
 interface VideoEntry {
   title: string;
@@ -53,25 +54,34 @@ export function VideosSection() {
   const [featured, ...rest] = videos;
   return (
     <section
-      className="px-6 md:px-14 py-16 md:py-20 border-t border-border-warm"
-      style={{ background: "var(--sandalwood)", backgroundImage: "linear-gradient(180deg, rgba(25,99,145,0.04), transparent 30%)" }}
+      className="relative px-6 md:px-14 py-20 md:py-32 border-y border-border-warm overflow-hidden"
+      style={{ background: "var(--ink)" }}
     >
-      <div className="max-w-7xl mx-auto">
-        <div className="flex items-end justify-between gap-4 mb-10">
+      {/* Background Decor */}
+      <div className="absolute inset-0 opacity-10 pointer-events-none mix-blend-overlay">
+        <Thoranam width={800} height={800} className="w-full h-full object-cover text-paper" />
+      </div>
+      <div className="absolute right-0 top-0 opacity-[0.04] pointer-events-none translate-x-1/4 -translate-y-1/4">
+        <PeacockEye size={600} className="text-paper" />
+      </div>
+
+      <div className="max-w-7xl mx-auto relative z-10">
+        <div className="flex flex-col sm:flex-row items-start sm:items-end justify-between gap-6 mb-12 md:mb-16">
           <div>
-            <div className="eyebrow mb-2">
-              <span data-bi lang="ta">வீடியோக்கள் · From The Channel</span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-paper/10 border border-paper/10 text-paper text-[11px] font-bold tracking-wider uppercase mb-6 shadow-sm">
+              <span data-bi lang="ta">வீடியோக்கள்</span>
               <span data-bi lang="en">From The Channel</span>
             </div>
+            
             <h2
-              className="ta-display text-burgundy"
-              style={{ fontSize: "clamp(28px, 4vw, 44px)" }}
+              className="ta-display text-paper"
+              style={{ fontSize: "clamp(32px, 5vw, 48px)", fontWeight: 600, lineHeight: 1.15 }}
             >
               <span data-bi lang="ta">காண்க, கேள்க</span>
               <span data-bi lang="en">Watch &amp; listen</span>
             </h2>
             <p
-              className="text-ink-3 mt-1.5"
+              className="text-paper/70 mt-3"
               style={{
                 fontFamily: "var(--font-display)",
                 fontStyle: "italic",
@@ -85,8 +95,8 @@ export function VideosSection() {
             href="https://www.youtube.com/"
             target="_blank"
             rel="noreferrer"
-            className="ta text-burgundy text-sm hover:text-peacock hidden sm:inline-block"
-            style={{ borderBottom: "1px solid currentColor", paddingBottom: 2 }}
+            className="ta text-turmeric text-[14px] font-semibold hover:text-white transition-colors pb-1 flex items-center gap-1.5"
+            style={{ borderBottom: "1px solid currentColor" }}
           >
             <span data-bi lang="ta">அனைத்து வீடியோக்கள் →</span>
             <span data-bi lang="en">All videos →</span>
@@ -94,37 +104,42 @@ export function VideosSection() {
         </div>
 
         {/* Featured + 2×2 grid */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-7 lg:gap-8">
-          <div className="lg:col-span-2">
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-10">
+          <div className="lg:col-span-2 relative group rounded-[28px] overflow-hidden shadow-[0_20px_50px_-15px_rgba(0,0,0,0.5)] border border-white/10 hover:border-white/20 transition-colors">
             <VideoCard
               featured
+              darkTheme
               id={extractId(featured.url)}
               title={featured.title}
               description={featured.description}
             />
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-8">
             {rest.slice(0, 2).map((v) => (
-              <VideoCard
-                key={v.url}
-                id={extractId(v.url)}
-                title={v.title}
-                description={v.description}
-              />
+              <div key={v.url} className="relative group rounded-[20px] overflow-hidden shadow-xl border border-white/5 hover:border-white/15 transition-colors">
+                <VideoCard
+                  darkTheme
+                  id={extractId(v.url)}
+                  title={v.title}
+                  description={v.description}
+                />
+              </div>
             ))}
           </div>
         </div>
 
         {/* Remaining row */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-7 lg:gap-8 mt-7 lg:mt-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8 lg:gap-10 mt-8 lg:mt-10">
           {rest.slice(2).map((v) => (
-            <VideoCard
-              key={v.url}
-              id={extractId(v.url)}
-              title={v.title}
-              description={v.description}
-            />
+            <div key={v.url} className="relative group rounded-[20px] overflow-hidden shadow-xl border border-white/5 hover:border-white/15 transition-colors">
+              <VideoCard
+                darkTheme
+                id={extractId(v.url)}
+                title={v.title}
+                description={v.description}
+              />
+            </div>
           ))}
         </div>
       </div>

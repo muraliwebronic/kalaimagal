@@ -82,7 +82,7 @@ export function MobileBottomNav({ lang, user }: MobileBottomNavProps) {
                 {/* Active indicator — short burgundy bar at the top */}
                 <span
                   className={cn(
-                    "absolute top-0 left-1/2 -translate-x-1/2 h-[2px] bg-burgundy transition-all duration-300",
+                    "absolute top-0 left-1/2 -translate-x-1/2 h-[2px] bg-gradient-gold transition-all duration-300",
                     active ? "w-8 opacity-100" : "w-0 opacity-0",
                   )}
                 />

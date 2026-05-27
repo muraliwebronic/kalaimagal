@@ -39,7 +39,7 @@ export async function Header() {
           <button
             type="button"
             aria-label="Search"
-            className="grid place-items-center size-9 border border-border-warm text-ink-2 hover:border-burgundy hover:text-burgundy hover:bg-burgundy/5 rounded-sm transition-all duration-200"
+            className="grid place-items-center size-9 border border-border-warm text-ink-2 hover:border-turmeric hover:text-turmeric hover:bg-turmeric/10 rounded-sm transition-all duration-200"
           >
             <Search className="size-3.5" />
           </button>

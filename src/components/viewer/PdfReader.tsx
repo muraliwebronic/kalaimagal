@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import dynamic from "next/dynamic";
-import { ChevronLeft, ChevronRight, Bookmark, ZoomIn, ZoomOut, RotateCcw } from "lucide-react";
+import { ChevronLeft, ChevronRight, Bookmark, ZoomIn, ZoomOut, RotateCcw, Maximize, Minimize } from "lucide-react";
 import { PreviewBlur } from "./PreviewBlur";
 import { SubscriptionPanel } from "./SubscriptionPanel";
 
@@ -78,6 +78,28 @@ export function PdfReader(props: PdfReaderProps) {
   const zoomIn = () => setZoomIndex((i) => Math.min(ZOOM_STEPS.length - 1, i + 1));
   const zoomReset = () => setZoomIndex(DEFAULT_ZOOM_INDEX);
 
+  const [isFullscreen, setIsFullscreen] = useState(false);
+
+  useEffect(() => {
+    const handleFullscreenChange = () => {
+      setIsFullscreen(!!document.fullscreenElement);
+    };
+    document.addEventListener("fullscreenchange", handleFullscreenChange);
+    return () => document.removeEventListener("fullscreenchange", handleFullscreenChange);
+  }, []);
+
+  const toggleFullscreen = () => {
+    if (!document.fullscreenElement) {
+      document.documentElement.requestFullscreen().catch((err) => {
+        console.error(`Error attempting to enable fullscreen: ${err.message}`);
+      });
+    } else {
+      document.exitFullscreen().catch((err) => {
+        console.error(`Error attempting to exit fullscreen: ${err.message}`);
+      });
+    }
+  };
+
   // Block Ctrl+S / Ctrl+P / Ctrl+C inside the reader
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
@@ -122,7 +144,7 @@ export function PdfReader(props: PdfReaderProps) {
     // pixel between the header and the mobile bottom nav. overflow-hidden
     // at the outer shell catches any flip-animation overshoot.
     <div
-      className="h-dvh flex flex-col overflow-hidden"
+      className="fixed inset-0 z-50 h-[100dvh] flex flex-col overflow-hidden"
       style={{ background: "#2A1F18", color: "#F1E6D2" }}
     >
       {/* Top chrome — dark warm-ink with gold-pale text */}
@@ -230,6 +252,9 @@ export function PdfReader(props: PdfReaderProps) {
           <ReaderIcon ariaLabel="Bookmark">
             <Bookmark className="size-3.5" />
           </ReaderIcon>
+          <ReaderIcon ariaLabel="Toggle Fullscreen" onClick={toggleFullscreen}>
+            {isFullscreen ? <Minimize className="size-3.5" /> : <Maximize className="size-3.5" />}
+          </ReaderIcon>
           {paywalled && (
             <span
               className="px-2 py-1 ml-2"
@@ -255,7 +280,7 @@ export function PdfReader(props: PdfReaderProps) {
           no browser scrollbar ever appears. The FlipBookViewer itself
           provides internal breathing-room padding so curls and shadows
           render in full. */}
-      <main className="flex-1 min-h-0 flex items-center justify-center overflow-hidden relative">
+      <main className="flex-1 min-h-0 flex items-center justify-center overflow-auto relative">
         <FlipBookViewer
           contentId={contentId}
           pageCount={effectivePageCount}
@@ -264,22 +289,18 @@ export function PdfReader(props: PdfReaderProps) {
           onPageChange={setPage}
           zoom={zoom}
           showSubscribeTail={isPaywalledBook}
-          subscribeTail={
-            isPaywalledBook ? (
-              <div className="relative h-full">
-                <SubscriptionPanel
-                  titleTamil={titleTamil}
-                  titleEnglish={titleEnglish}
-                  authorNameTamil={authorNameTamil}
-                  priceInr={priceInr}
-                  isLoggedIn={isLoggedIn}
-                  user={user}
-                />
-              </div>
-            ) : undefined
-          }
         />
         {paywalled && <PreviewBlur />}
+        {paywalled && (
+          <SubscriptionPanel
+            titleTamil={titleTamil}
+            titleEnglish={titleEnglish}
+            authorNameTamil={authorNameTamil}
+            priceInr={priceInr}
+            isLoggedIn={isLoggedIn}
+            user={user}
+          />
+        )}
       </main>
 
       {/* Floating side arrows — only on desktop */}
@@ -334,9 +355,46 @@ export function PdfReader(props: PdfReaderProps) {
         >
           <ChevronLeft className="size-4" />
         </button>
-        <span style={{ fontFamily: "var(--font-display)", color: "#F1E6D2", fontVariantNumeric: "tabular-nums" }}>
-          {page} <span style={{ color: "#8A7A60" }}>/</span> {pageCount.toLocaleString()}
-        </span>
+        <div
+          className="flex items-center"
+          style={{ border: "1px solid rgba(216,184,124,.18)", borderRadius: "4px" }}
+        >
+          <button
+            type="button"
+            onClick={zoomOut}
+            disabled={zoomIndex === 0}
+            aria-label="Zoom out"
+            className="grid place-items-center w-8 h-8 transition-colors disabled:opacity-30 active:bg-white/5"
+            style={{ color: "var(--gold-pale)" }}
+          >
+            <ZoomOut className="size-3.5" />
+          </button>
+          <button
+            type="button"
+            onClick={zoomReset}
+            aria-label="Reset zoom"
+            className="px-2 h-8 text-[11px] tabular-nums transition-colors active:bg-white/5"
+            style={{
+              color: "var(--gold-pale)",
+              fontFamily: "var(--font-display)",
+              borderLeft: "1px solid rgba(216,184,124,.18)",
+              borderRight: "1px solid rgba(216,184,124,.18)",
+            }}
+            title="Reset zoom"
+          >
+            {Math.round(zoom * 100)}%
+          </button>
+          <button
+            type="button"
+            onClick={zoomIn}
+            disabled={zoomIndex === ZOOM_STEPS.length - 1}
+            aria-label="Zoom in"
+            className="grid place-items-center w-8 h-8 transition-colors disabled:opacity-30 active:bg-white/5"
+            style={{ color: "var(--gold-pale)" }}
+          >
+            <ZoomIn className="size-3.5" />
+          </button>
+        </div>
         <button
           type="button"
           onClick={goNext}
@@ -376,15 +434,18 @@ export function PdfReader(props: PdfReaderProps) {
 
 function ReaderIcon({
   ariaLabel,
+  onClick,
   children,
 }: {
   ariaLabel?: string;
+  onClick?: () => void;
   children: React.ReactNode;
 }) {
   return (
     <button
       type="button"
       aria-label={ariaLabel}
+      onClick={onClick}
       className="grid place-items-center w-8 h-8 transition-colors"
       style={{
         color: "var(--gold-pale)",

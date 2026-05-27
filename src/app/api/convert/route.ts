@@ -40,9 +40,21 @@ export async function GET(req: Request) {
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   const origin = req.headers.get("origin");
   const referer = req.headers.get("referer");
-  const sameOrigin =
-    (origin && origin === appUrl) ||
-    (referer && referer.startsWith(appUrl));
+  const host = req.headers.get("host");
+  const isDev = process.env.NODE_ENV === "development";
+
+  let sameOrigin = false;
+  if (!origin && !referer) {
+    sameOrigin = true; // Allow direct access or strict policies that strip these
+  } else {
+    if (origin && (origin === appUrl || (isDev && host && origin.includes(host)))) {
+      sameOrigin = true;
+    }
+    if (referer && (referer.startsWith(appUrl) || (isDev && host && referer.includes(host)))) {
+      sameOrigin = true;
+    }
+  }
+
   if (!sameOrigin) {
     return new NextResponse("Forbidden (origin)", { status: 403 });
   }

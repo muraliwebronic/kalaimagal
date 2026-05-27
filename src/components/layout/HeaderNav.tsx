@@ -48,7 +48,7 @@ export function HeaderNav() {
             {/* Active underline indicator */}
             <span
               className={cn(
-                "absolute bottom-0 left-0 h-[2px] bg-burgundy transition-all duration-300",
+                "absolute bottom-0 left-0 h-[2px] bg-gradient-gold transition-all duration-300",
                 isActive ? "w-full" : "w-0 group-hover:w-full"
               )}
             />

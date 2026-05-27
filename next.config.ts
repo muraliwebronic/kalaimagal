@@ -2,6 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactCompiler: true,
+  allowedDevOrigins: ["192.168.0.12"],
 
   // Native-binding + dynamic-require packages can't be bundled by Turbopack.
   // Keep them external so they're loaded via Node's require() at runtime.
@@ -21,7 +22,7 @@ const nextConfig: NextConfig = {
         source: "/(.*)",
         headers: [
           { key: "Access-Control-Allow-Credentials", value: "true" },
-          { key: "Access-Control-Allow-Origin", value: "192.168.0.10" },
+          { key: "Access-Control-Allow-Origin", value: "192.168.0.12" },
           { key: "Access-Control-Allow-Methods", value: "GET,OPTIONS,PATCH,DELETE,POST,PUT" },
           {
             key: "Access-Control-Allow-Headers",

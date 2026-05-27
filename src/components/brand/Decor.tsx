@@ -62,16 +62,19 @@ export function PeacockEye({
   size = 36,
   opacity = 1,
   flip = false,
+  className,
 }: {
   size?: number;
   opacity?: number;
   flip?: boolean;
+  className?: string;
 }) {
   return (
     <svg
       width={size}
       height={size * 1.4}
       viewBox="0 0 36 50"
+      className={className}
       style={{ display: "block", transform: flip ? "scaleX(-1)" : undefined }}
       aria-hidden="true"
     >
@@ -90,10 +93,12 @@ export function Thoranam({
   width = 520,
   height = 26,
   color = "#7A1F2B",
+  className,
 }: {
   width?: number;
   height?: number;
   color?: string;
+  className?: string;
 }) {
   const n = 24;
   const leaves: React.ReactElement[] = [];
@@ -111,6 +116,7 @@ export function Thoranam({
       width={width}
       height={height}
       viewBox={`0 0 ${width} ${height}`}
+      className={className}
       style={{ display: "block" }}
       aria-hidden="true"
     >

@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Cover, pickCoverVariant, emblemFromTitle } from "@/components/brand/Cover";
+import { ContentCard, type ContentCardData } from "@/components/content/ContentCard";
 import { Divider } from "@/components/brand/Decor";
 import { getPublicContentBySlug } from "@/lib/content";
 import { getSetting } from "@/lib/settings";
@@ -56,6 +57,7 @@ export default async function BookDetailPage({
     },
     include: {
       contentAuthors: { include: { author: true }, orderBy: { sortOrder: "asc" }, take: 1 },
+      contentCategories: { include: { category: true }, take: 1 },
     },
     orderBy: { publishedAt: "desc" },
     take: 4,
@@ -114,22 +116,29 @@ export default async function BookDetailPage({
 
         {/* Detail */}
         <section className="px-6 md:px-14 py-8 md:py-14">
-          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] gap-10 md:gap-16">
+          <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-[340px_1fr] lg:grid-cols-[380px_1fr] gap-10 lg:gap-16 items-start">
           {/* Cover column */}
           <div>
-            <Cover
-              titleTamil={book.titleTamil}
-              author={primaryAuthor?.nameTamil}
-              emblem={emblemFromTitle(book.titleTamil)}
-              variant={coverVariant}
-              src={book.coverImageUrl}
-            />
+            <div
+              className="relative border border-border-warm p-2.5 rounded-xl transition-transform duration-300 hover:-translate-y-1 hover:shadow-lg inline-block w-full max-w-[380px]"
+              style={{ background: "rgba(241,230,210,0.5)" }}
+            >
+              <Cover
+                titleTamil={book.titleTamil}
+                author={primaryAuthor?.nameTamil}
+                emblem={emblemFromTitle(book.titleTamil)}
+                variant={coverVariant}
+                src={book.coverImageUrl}
+              />
+            </div>
           </div>
 
           {/* Metadata column */}
           <div>
-            <div className="flex flex-wrap items-center gap-2 mb-4">
-              <span className={book.isPremium ? "badge-km badge-km-premium" : "badge-km badge-km-free"}>
+            <div className="flex flex-wrap items-center gap-2.5 mb-6">
+              <span className={book.isPremium 
+                ? "bg-gradient-gold text-ink px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase shadow-sm flex items-center gap-1.5"
+                : "bg-paper text-ink border border-border-warm px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase shadow-sm flex items-center gap-1.5"}>
                 {book.isPremium ? (
                   <>
                     <span data-bi lang="ta">சந்தா</span>
@@ -143,10 +152,13 @@ export default async function BookDetailPage({
                 )}
               </span>
               {book.isFeatured && (
-                <span className="badge-km badge-km-gold">★ Featured</span>
+                <span className="bg-ink text-sandalwood px-4 py-1.5 rounded-full text-[11px] font-bold tracking-wider uppercase shadow-sm flex items-center gap-1.5">
+                  <span data-bi lang="ta">சிறப்பு</span>
+                  <span data-bi lang="en">Featured</span>
+                </span>
               )}
               {book.contentCategories.map((cc) => (
-                <span key={cc.category.slug} className="badge-km badge-km-chip">
+                <span key={cc.category.slug} className="eyebrow eyebrow-sm mb-0">
                   <span lang="ta">{cc.category.nameTamil}</span>
                 </span>
               ))}
@@ -154,8 +166,8 @@ export default async function BookDetailPage({
 
             <h1
               lang="ta"
-              className="ta-display text-burgundy"
-              style={{ fontSize: "clamp(40px, 6.5vw, 62px)", lineHeight: 1.1, marginBottom: 12 }}
+              className="ta-display text-ink"
+              style={{ fontSize: "clamp(42px, 6.5vw, 64px)", lineHeight: 1.15, marginBottom: 16 }}
             >
               {book.titleTamil}
             </h1>
@@ -163,7 +175,7 @@ export default async function BookDetailPage({
               <p
                 lang="en"
                 className="text-ink-2"
-                style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 22, marginBottom: 22 }}
+                style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 24, marginBottom: 26 }}
               >
                 {book.titleEnglish}
               </p>
@@ -171,19 +183,21 @@ export default async function BookDetailPage({
 
             {/* Author + dates strip */}
             <div
-              className="flex flex-wrap gap-6 py-4 border-y border-border-warm"
-              style={{ marginBottom: 26 }}
+              className="flex flex-wrap gap-x-8 gap-y-4 py-5 mb-8 border-y border-border-warm/60"
             >
               {primaryAuthor && (
                 <div>
-                  <div className="eyebrow eyebrow-sm">Author</div>
-                  <p lang="ta" className="ta text-ink mt-1" style={{ fontSize: 16 }}>
+                  <div className="eyebrow text-ink-3 mb-1.5 flex gap-1.5">
+                    <span data-bi lang="ta">எழுத்தாளர்</span>
+                    <span data-bi lang="en">Author</span>
+                  </div>
+                  <p lang="ta" className="ta text-ink font-semibold" style={{ fontSize: 18 }}>
                     {primaryAuthor.nameTamil}
                   </p>
                   {primaryAuthor.nameEnglish && (
                     <p
-                      className="text-ink-3"
-                      style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 13 }}
+                      className="text-ink-3 mt-0.5"
+                      style={{ fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 14 }}
                     >
                       {primaryAuthor.nameEnglish}
                     </p>
@@ -192,22 +206,14 @@ export default async function BookDetailPage({
               )}
               {book.publicationYear && (
                 <>
-                  <div className="border-l border-border-warm" />
+                  <div className="hidden sm:block border-l border-border-warm/60" />
                   <div>
-                    <div className="eyebrow eyebrow-sm">First Published</div>
-                    <p className="text-ink mt-1" style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
+                    <div className="eyebrow text-ink-3 mb-1.5 flex gap-1.5">
+                      <span data-bi lang="ta">பதிப்பு</span>
+                      <span data-bi lang="en">Published</span>
+                    </div>
+                    <p className="text-ink font-semibold" style={{ fontFamily: "var(--font-display)", fontSize: 18 }}>
                       {book.publicationYear}
-                    </p>
-                  </div>
-                </>
-              )}
-              {book.publishedAt && (
-                <>
-                  <div className="border-l border-border-warm" />
-                  <div>
-                    <div className="eyebrow eyebrow-sm">Added</div>
-                    <p className="text-ink mt-1" style={{ fontFamily: "var(--font-display)", fontSize: 16 }}>
-                      {book.publishedAt.toLocaleDateString("en-US", { month: "long", year: "numeric" })}
                     </p>
                   </div>
                 </>
@@ -221,35 +227,29 @@ export default async function BookDetailPage({
               </p>
             )}
 
-            {/* Key/value grid */}
-            <div className="frame mb-7" style={{ padding: 0 }}>
-              <div className="grid grid-cols-2 sm:grid-cols-3">
-                {([
-                  { k: { ta: "பக்கங்கள்", en: "Pages" }, v: book.pageCount?.toLocaleString() ?? "—" },
-                  { k: { ta: "மொழி", en: "Language" }, v: book.language === "BILINGUAL" ? "Tamil + English" : book.language === "EN" ? "English" : "Tamil · தமிழ்" },
-                  { k: { ta: "வடிவம்", en: "Format" }, v: "PDF · Digital" },
-                  { k: { ta: "ISBN", en: "ISBN" }, v: book.isbn ?? "—" },
-                  { k: { ta: "பதிப்பகம்", en: "Publisher" }, v: book.publisher ?? "—" },
-                  { k: { ta: "ஆண்டு", en: "Year" }, v: book.publicationYear?.toString() ?? "—" },
-                ]).map((kv, i) => (
-                  <div
-                    key={i}
-                    className="px-4 py-3.5"
-                    style={{
-                      borderRight: i % 3 === 2 ? "none" : "1px solid var(--border-soft)",
-                      borderBottom: i < 3 ? "1px solid var(--border-soft)" : "none",
-                    }}
-                  >
-                    <div className="eyebrow eyebrow-sm mb-1">
-                      <span data-bi lang="ta">{kv.k.ta}</span>
-                      <span data-bi lang="en">{kv.k.en}</span>
-                    </div>
-                    <p className="text-ink" style={{ fontFamily: "var(--font-display)", fontSize: 15 }}>
-                      {kv.v}
-                    </p>
+            {/* Key/value Bento grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-8">
+              {([
+                { k: { ta: "பக்கங்கள்", en: "Pages" }, v: book.pageCount?.toLocaleString() ?? "—" },
+                { k: { ta: "மொழி", en: "Language" }, v: book.language === "BILINGUAL" ? "Tamil + English" : book.language === "EN" ? "English" : "Tamil · தமிழ்" },
+                { k: { ta: "வடிவம்", en: "Format" }, v: "PDF · Digital" },
+                { k: { ta: "ISBN", en: "ISBN" }, v: book.isbn ?? "—" },
+                { k: { ta: "பதிப்பகம்", en: "Publisher" }, v: book.publisher ?? "—" },
+                { k: { ta: "ஆண்டு", en: "Year" }, v: book.publicationYear?.toString() ?? "—" },
+              ]).map((kv, i) => (
+                <div
+                  key={i}
+                  className="bg-paper border border-border-warm rounded-[16px] p-4 flex flex-col justify-center shadow-sm"
+                >
+                  <div className="eyebrow text-[10px] text-ink-3 mb-1.5 flex gap-1.5 uppercase">
+                    <span data-bi lang="ta">{kv.k.ta}</span>
+                    <span data-bi lang="en">{kv.k.en}</span>
                   </div>
-                ))}
-              </div>
+                  <p className="text-ink font-medium" style={{ fontSize: 14 }}>
+                    {kv.v}
+                  </p>
+                </div>
+              ))}
             </div>
 
             {/* Read CTA */}
@@ -310,37 +310,25 @@ export default async function BookDetailPage({
                   : "Related Books"
               }
             />
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-x-6 gap-y-10 mt-8">
-              {related.map((b) => (
-                <Link key={b.id} href={`/books/${b.slug}`} className="group block">
-                  <div className="mx-auto flex flex-col" style={{ maxWidth: 240 }}>
-                    <div
-                      className="border border-border-warm p-1.5 transition-transform group-hover:translate-y-[-2px]"
-                      style={{ background: "rgba(241,230,210,0.35)" }}
-                    >
-                      <Cover
-                        titleTamil={b.titleTamil}
-                        author={b.contentAuthors[0]?.author.nameTamil ?? null}
-                        emblem={emblemFromTitle(b.titleTamil)}
-                        variant={pickCoverVariant(b.slug)}
-                        src={b.coverImageUrl}
-                      />
-                    </div>
-                    <h3
-                      lang="ta"
-                      className="ta-display text-ink mt-3 group-hover:text-burgundy transition-colors line-clamp-2"
-                      style={{ fontSize: 15, lineHeight: 1.3 }}
-                    >
-                      {b.titleTamil}
-                    </h3>
-                    {b.contentAuthors[0] && (
-                      <p lang="ta" className="ta text-ink-3 mt-1" style={{ fontSize: 11 }}>
-                        {b.contentAuthors[0].author.nameTamil}
-                      </p>
-                    )}
-                  </div>
-                </Link>
-              ))}
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-x-6 gap-y-10 mt-8">
+              {related.map((b) => {
+                const card: ContentCardData = {
+                  id: b.id,
+                  slug: b.slug,
+                  type: b.type,
+                  titleTamil: b.titleTamil,
+                  titleEnglish: b.titleEnglish,
+                  excerpt: b.excerpt,
+                  description: b.description,
+                  coverImageUrl: b.coverImageUrl,
+                  isPremium: b.isPremium,
+                  authorNameTamil: b.contentAuthors[0]?.author.nameTamil,
+                  categoryTamil: b.contentCategories?.[0]?.category?.nameTamil ?? null,
+                  pageCount: b.pageCount,
+                  readingTimeMinutes: b.readingTimeMinutes,
+                };
+                return <ContentCard key={b.id} item={card} />;
+              })}
             </div>
             </div>
           </section>

@@ -93,10 +93,10 @@ function PageNumber({ href, active, label }: { href: string; active: boolean; la
       href={href}
       aria-current={active ? "page" : undefined}
       className={cn(
-        "inline-flex items-center justify-center w-9 h-9 text-sm transition-colors",
+        "grid place-items-center w-9 h-9 text-sm font-medium transition-colors font-display rounded-sm",
         active
-          ? "border border-burgundy bg-burgundy text-paper"
-          : "border border-transparent text-ink-2 hover:border-border-warm",
+          ? "border border-transparent bg-gradient-gold text-ink shadow-sm"
+          : "border border-transparent text-ink hover:border-border-warm hover:bg-sandalwood",
       )}
       style={{ fontFamily: "var(--font-display)", fontWeight: 500 }}
     >

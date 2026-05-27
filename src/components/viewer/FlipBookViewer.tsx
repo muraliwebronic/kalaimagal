@@ -20,10 +20,8 @@ export interface FlipBookViewerProps {
   page: number;
   /** Notify parent when the flip changes the page. */
   onPageChange: (page: number) => void;
-  /** If true, a final synthetic "subscribe" page is appended after pageCount. */
+  /** If true, a final synthetic blank page is appended after pageCount for the paywall. */
   showSubscribeTail?: boolean;
-  /** Element rendered for the subscribe tail page. */
-  subscribeTail?: React.ReactNode;
   /** 1 = default book size. < 1 zooms out, > 1 zooms in. */
   zoom?: number;
 }
@@ -50,7 +48,6 @@ export function FlipBookViewer({
   page,
   onPageChange,
   showSubscribeTail = false,
-  subscribeTail,
   zoom = 1,
 }: FlipBookViewerProps) {
   // Two-page spread on desktop, single portrait on phones. We don't
@@ -71,6 +68,50 @@ export function FlipBookViewer({
   const inFlightRef = useRef<Set<number>>(new Set());
   const [, setTick] = useState(0);
   const bump = useCallback(() => setTick((n) => n + 1), []);
+
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const lastPos = useRef({ x: 0, y: 0 });
+  const startPos = useRef({ x: 0, y: 0 });
+
+  const handlePointerDown = (e: React.PointerEvent<HTMLDivElement>) => {
+    setIsDragging(true);
+    lastPos.current = { x: e.clientX, y: e.clientY };
+    startPos.current = { x: e.clientX, y: e.clientY };
+    e.currentTarget.setPointerCapture(e.pointerId);
+  };
+
+  const handlePointerMove = (e: React.PointerEvent<HTMLDivElement>) => {
+    if (!isDragging || zoom <= 1) return;
+    const dx = e.clientX - lastPos.current.x;
+    const dy = e.clientY - lastPos.current.y;
+    lastPos.current = { x: e.clientX, y: e.clientY };
+    setPan((prev) => ({ x: prev.x + dx, y: prev.y + dy }));
+  };
+
+  const handlePointerUp = (e: React.PointerEvent<HTMLDivElement>) => {
+    setIsDragging(false);
+    e.currentTarget.releasePointerCapture(e.pointerId);
+
+    // Basic swipe-to-turn detection for mobile view where HTMLFlipBook is disabled
+    if (zoom === 1 && usePortrait) {
+      const dx = e.clientX - startPos.current.x;
+      const dy = Math.abs(e.clientY - startPos.current.y);
+      if (Math.abs(dx) > 40 && dy < Math.abs(dx)) {
+        if (dx > 0 && page > 1) {
+          onPageChange(page - 1);
+        } else if (dx < 0 && page < pageElements.length) {
+          onPageChange(page + 1);
+        }
+      }
+    }
+  };
+
+  useEffect(() => {
+    if (zoom === 1) {
+      setPan({ x: 0, y: 0 });
+    }
+  }, [zoom]);
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const bookRef = useRef<any>(null);
@@ -161,14 +202,14 @@ export function FlipBookViewer({
       />,
     );
   }
-  if (showSubscribeTail && subscribeTail) {
+  if (showSubscribeTail) {
     pageElements.push(
       <PageShell
         key="subscribe"
         number={pageCount + 1}
         totalPageCount={totalPageCount}
       >
-        {subscribeTail}
+        <div className="h-full w-full bg-paper" />
       </PageShell>,
     );
   }
@@ -182,59 +223,74 @@ export function FlipBookViewer({
   }
 
   return (
-    // Centered in the stage with breathing-room padding so the flip
-    // animation (curls, drop shadows, rotating leaf) renders in full.
-    // The inner div carries the user's zoom level via CSS transform —
-    // simpler than re-mounting the flipbook at a new size and keeps the
-    // animation smooth. PdfReader's outer shell is overflow-hidden, so
-    // zoomed-in overshoot is silently clipped.
-    <div className="w-full h-full flex items-center justify-center select-none p-4 md:p-8">
+    // We use touch-none on the outer div to prevent native browser panning/zooming
+    // so our custom drag-to-pan logic works perfectly.
+    <div 
+      className="w-full h-full flex items-center justify-center select-none overflow-hidden touch-none"
+      onPointerDown={handlePointerDown}
+      onPointerMove={handlePointerMove}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerUp}
+    >
       <div
+        className="flex items-center justify-center p-4 md:p-8 w-full h-full"
         style={{
-          transform: `scale(${zoom})`,
+          transform: `translate(${pan.x}px, ${pan.y}px) scale(${zoom})`,
           transformOrigin: "center center",
-          transition: "transform 0.25s ease-out",
+          transition: isDragging ? "none" : "transform 0.25s ease-out",
+          willChange: "transform",
+          cursor: zoom > 1 ? (isDragging ? "grabbing" : "grab") : "auto"
         }}
       >
-        <HTMLFlipBook
-          ref={bookRef}
-          // width/height are PER-PAGE dimensions; the lib renders 2 × width
-          // wide when `usePortrait` is false (desktop spread). The maxes
-          // are per-page too, so a 540 cap gives ~1080 spread on desktop
-          // — comfortable open-book proportions without dominating the
-          // canvas.
-          width={420}
-          height={560}
-          size="stretch"
-          minWidth={260}
-          maxWidth={540}
-          minHeight={340}
-          maxHeight={760}
-          usePortrait={usePortrait}
-          startPage={page - 1}
-          showCover={false}
-          drawShadow
-          // 1200ms reads as a deliberate, editorial page-turn — the old
-          // 650ms felt snappy when triggered programmatically from the
-          // arrow buttons. Manual drag-flips still feel fluid because
-          // they follow the cursor.
-          flippingTime={1200}
-          maxShadowOpacity={0.5}
-          mobileScrollSupport={false}
-          clickEventForward
-          useMouseEvents
-          swipeDistance={40}
-          showPageCorners
-          disableFlipByClick={false}
-          onFlip={handleFlip}
-          style={{ maxWidth: "100%" }}
-          className="flipbook"
-          // The lib types demand these props but they're optional at runtime.
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          {...({} as any)}
-        >
-          {pageElements}
-        </HTMLFlipBook>
+        {usePortrait ? (
+          <div
+            className="shadow-2xl"
+            style={{
+              width: "100%",
+              height: "100%",
+              maxHeight: "75vh",
+              aspectRatio: "420 / 560",
+            }}
+          >
+            {pageElements[page - 1]}
+          </div>
+        ) : (
+          <HTMLFlipBook
+            ref={bookRef}
+            // width/height are PER-PAGE dimensions; the lib renders 2 × width
+            // wide when `usePortrait` is false (desktop spread). The maxes
+            // are per-page too, so a 540 cap gives ~1080 spread on desktop
+            // — comfortable open-book proportions without dominating the
+            // canvas.
+            width={420}
+            height={560}
+            size="stretch"
+            minWidth={260}
+            maxWidth={540}
+            minHeight={340}
+            maxHeight={760}
+            usePortrait={false}
+            startPage={page - 1}
+            showCover={false}
+            drawShadow
+            flippingTime={1200}
+            maxShadowOpacity={0.5}
+            mobileScrollSupport={false}
+            clickEventForward
+            useMouseEvents={zoom === 1}
+            swipeDistance={40}
+            showPageCorners={zoom === 1}
+            disableFlipByClick={zoom > 1}
+            onFlip={handleFlip}
+            style={{ maxWidth: "100%" }}
+            className="flipbook"
+            // The lib types demand these props but they're optional at runtime.
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            {...({} as any)}
+          >
+            {pageElements}
+          </HTMLFlipBook>
+        )}
       </div>
     </div>
   );
@@ -261,7 +317,7 @@ const PageShell = forwardRef<HTMLDivElement, PageShellProps>(function PageShell(
   return (
     <div
       ref={ref}
-      className="relative bg-paper text-ink overflow-hidden"
+      className="relative bg-paper text-ink overflow-hidden w-full h-full"
       style={{ boxShadow: "inset 0 0 0 1px rgba(20,17,12,0.08)" }}
     >
       <div className="absolute inset-0">{children}</div>

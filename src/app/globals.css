@@ -113,6 +113,7 @@
   --gold:          #94783B;  /* logo gold — borders, eyebrow */
   --gold-pale:     #C0904F;
   --logo-yellow:   #F2DB1F;  /* signature yellow — highlights, decoration */
+  --gold-gradient: linear-gradient(to bottom right, #E6B800, #C24C00); /* deep pure gold gradient */
 
   /* shadcn semantic tokens (admin) — primary is the logo red,
      accent is orange, destructive is the logo red. */
@@ -150,6 +151,10 @@
   --sidebar-accent-foreground:oklch(0.512 0.156 29.3);
   --sidebar-border:           oklch(0.870 0.030 82);
   --sidebar-ring:             oklch(0.512 0.156 29.3);
+}
+
+.bg-gradient-gold {
+  background: var(--gold-gradient);
 }
 
 .dark {
@@ -253,7 +258,7 @@ html[data-lang="en"] [data-bi][lang="ta"] { display: none; }
 }
 .divider-diamond {
   width: 10px; height: 10px; transform: rotate(45deg);
-  background: var(--burgundy);
+  background: var(--gold-gradient);
   position: relative;
 }
 .divider-diamond::before {
@@ -303,16 +308,17 @@ html[data-lang="en"] [data-bi][lang="ta"] { display: none; }
 }
 .btn[disabled] { opacity: 0.5; cursor: not-allowed; }
 .btn-primary {
-  background: var(--burgundy);          /* peacock blue */
-  color: var(--logo-yellow);            /* logo-yellow text on peacock — matches logo */
-  border-color: var(--burgundy);
-  box-shadow: 0 0 0 1px var(--paper) inset, 0 0 0 2px var(--burgundy) inset;
+  background: var(--gold-gradient);
+  color: var(--ink);            /* dark text on gold */
+  border-color: transparent;
+  box-shadow: 0 0 0 1px var(--paper) inset;
   padding: 11px 26px;
 }
 .btn-primary:not([disabled]):hover {
-  background: var(--turmeric-deep);            /* darker rust-red on hover */
-  border-color: var(--turmeric-deep);
-  box-shadow: 0 0 0 1px var(--paper) inset, 0 0 0 2px var(--turmeric-deep) inset;
+  background: linear-gradient(to bottom right, #CCA300, #A64100); /* deeper version for hover */
+  border-color: transparent;
+  box-shadow: 0 0 0 1px var(--paper) inset;
+  color: var(--ink);
 }
 .btn-ghost {
   background: transparent;
@@ -343,7 +349,7 @@ html[data-lang="en"] [data-bi][lang="ta"] { display: none; }
   color: var(--ink-2);
 }
 /* Premium badge mirrors the logo: peacock blue background + logo yellow text */
-.badge-km-premium { background: var(--burgundy); color: var(--logo-yellow); border-color: var(--burgundy); }
+.badge-km-premium { background: var(--gold-gradient); color: var(--ink); border-color: transparent; }
 .badge-km-free    { background: var(--turmeric); color: var(--ink); border-color: var(--gold); }
 .badge-km-gold    { background: var(--logo-yellow); color: var(--ink); border-color: var(--gold); }
 .badge-km-alert   { background: var(--kumkum); color: #FFF6E5; border-color: var(--kumkum); }
@@ -362,8 +368,8 @@ html[data-lang="en"] [data-bi][lang="ta"] { display: none; }
 .cover-km {
   position: relative;
   aspect-ratio: 3/4;
-  background: var(--burgundy);          /* peacock blue */
-  color: var(--logo-yellow);            /* bright yellow text */
+  background: var(--gold-gradient);
+  color: var(--ink);
   display: flex; flex-direction: column;
   padding: 16px;
   font-family: var(--font-tamil);
@@ -386,13 +392,12 @@ html[data-lang="en"] [data-bi][lang="ta"] { display: none; }
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100' preserveAspectRatio='none'><g fill='none' stroke='rgba(247,223,13,.7)' stroke-width='.5'><path d='M0 8 Q4 4 8 0'/><path d='M100 8 Q96 4 92 0'/><path d='M0 92 Q4 96 8 100'/><path d='M100 92 Q96 96 92 100'/></g></svg>");
 }
 .cover-km .cover-km-emblem {
-  color: var(--logo-yellow);
+  color: var(--ink-2);
   align-self: center;
   font-family: var(--font-display);
   font-style: italic;
   font-size: 14px;
   letter-spacing: 0.2em;
-  color: var(--gold-pale);
   margin-bottom: 8px;
 }
 .cover-km .cover-km-title {
@@ -409,7 +414,7 @@ html[data-lang="en"] [data-bi][lang="ta"] { display: none; }
   text-align: center;
   font-size: 12px;
   letter-spacing: 0.1em;
-  color: var(--gold-pale);
+  color: var(--ink-2);
 }
 
 .cover-km-sand    { background: var(--sandalwood-2); color: var(--burgundy); }

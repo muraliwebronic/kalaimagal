@@ -7,6 +7,7 @@ import { listPublicContent, CONTENT_PAGE_SIZE } from "@/lib/content";
 import { getSetting } from "@/lib/settings";
 import { prisma } from "@/lib/db";
 import { cn } from "@/lib/utils";
+import { Gopuram } from "@/components/brand/Decor";
 
 export const metadata = { title: "புத்தகங்கள் — Books" };
 
@@ -48,15 +49,19 @@ export default async function BooksPage({
       <Header />
       <main className="flex-1 paper-warm">
         {/* Page header */}
-        <section className="px-6 md:px-14 pt-14 pb-8 border-b border-border-warm">
-          <div className="max-w-7xl mx-auto flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6">
-            <div>
+        <section className="px-0 md:px-10 py-0 md:py-6 max-w-[1400px] mx-auto border-b border-border-warm/30">
+          <div className="relative w-full rounded-none md:rounded-[40px] overflow-hidden bg-paper shadow-sm flex flex-col md:flex-row lg:items-end lg:justify-between p-8 md:p-14 lg:p-20 border-b md:border border-border-warm mb-2">
+            <div className="absolute right-0 bottom-0 opacity-[0.06] pointer-events-none translate-x-1/4 translate-y-1/4">
+              <Gopuram width={800} height={400} />
+            </div>
+            
+            <div className="relative z-10 flex-1">
               <div className="eyebrow mb-2.5">
                 <span data-bi lang="ta">நூலகம் · The Library</span>
                 <span data-bi lang="en">The Library</span>
               </div>
               <h1
-                className="ta-display text-burgundy"
+                className="ta-display text-ink"
                 style={{ fontSize: "clamp(40px, 6vw, 56px)", marginBottom: 8 }}
               >
                 <span data-bi lang="ta">புத்தகங்கள்</span>
@@ -156,14 +161,14 @@ function FilterPill({ label, href, active }: FilterPillProps) {
     <Link
       href={href}
       className={cn(
-        "ta text-[13px] px-4 py-1.5 rounded-full border transition-colors",
+        "ta text-[11px] px-4 py-2 rounded-full transition-colors flex items-center gap-1.5 shadow-sm font-semibold tracking-wider uppercase",
         active
-          ? "bg-burgundy border-burgundy text-paper"
-          : "border-border-warm text-ink-2 hover:border-burgundy hover:text-burgundy",
+          ? "bg-ink border-transparent text-sandalwood"
+          : "bg-paper border border-border-warm text-ink-2 hover:border-ink hover:text-ink",
       )}
     >
       <span data-bi lang="ta">{label.ta}</span>
-      <span data-bi lang="en" style={{ fontFamily: "var(--font-display)" }}>{label.en}</span>
+      <span data-bi lang="en">{label.en}</span>
     </Link>
   );
 }
