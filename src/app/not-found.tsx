@@ -3,14 +3,12 @@ import { Header } from "@/components/layout/Header";
 import { Footer } from "@/components/layout/Footer";
 import { Gopuram, Thoranam, Divider } from "@/components/brand/Decor";
 
-export const metadata = {
-  title: "பக்கம் கிடைக்கவில்லை · Page not found",
-  description: "The page you're looking for doesn't exist.",
-};
+
 
 export default function NotFound() {
   return (
     <>
+      <title>பக்கம் கிடைக்கவில்லை · Page not found</title>
       <Header />
       <main className="flex-1 paper-warm relative overflow-hidden">
         <div className="absolute inset-x-0 bottom-0 flex justify-center pointer-events-none">
